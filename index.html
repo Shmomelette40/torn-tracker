@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torn Company Tracker - Proof of Concept</title>
+  <title>Torn Company Tracker | Employee Stats Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
   <style>
     * {
       margin: 0;
@@ -11,12 +12,39 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --bg-gradient-start: #667eea;
+      --bg-gradient-end: #764ba2;
+      --card-bg: #ffffff;
+      --text-primary: #333;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --accent-color: #667eea;
+      --error-bg: #fee;
+      --error-border: #fcc;
+      --error-text: #c33;
+    }
+
+    body.dark-mode {
+      --bg-gradient-start: #1a1a2e;
+      --bg-gradient-end: #16213e;
+      --card-bg: #0f1419;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --accent-color: #818cf8;
+      --error-bg: #4c1d1d;
+      --error-border: #7f1d1d;
+      --error-text: #fca5a5;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
       min-height: 100vh;
       padding: 20px;
-      color: #333;
+      color: var(--text-primary);
+      transition: background 0.3s ease;
     }
 
     .container {
@@ -24,25 +52,83 @@
       margin: 0 auto;
     }
 
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: white;
+      font-size: 24px;
+    }
+
+    .menu-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: var(--card-bg);
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 1000;
+      margin-top: 8px;
+    }
+
+    .dropdown-content.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background: var(--border-color);
+    }
+
     .card {
-      background: white;
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 16px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    h1 {
-      color: white;
-      margin-bottom: 20px;
-      font-size: 24px;
-      text-align: center;
-    }
-
     h2 {
       font-size: 18px;
       margin-bottom: 12px;
-      color: #667eea;
+      color: var(--accent-color);
     }
 
     .input-group {
@@ -54,54 +140,82 @@
       margin-bottom: 8px;
       font-weight: 500;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-icon {
+      cursor: pointer;
+      background: var(--accent-color);
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
     }
 
     input {
       width: 100%;
       padding: 12px;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border-color);
       border-radius: 8px;
       font-size: 16px;
       transition: border-color 0.2s;
+      background: var(--card-bg);
+      color: var(--text-primary);
     }
 
     input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: var(--accent-color);
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 4px;
     }
 
     button {
       width: 100%;
       padding: 14px;
-      background: #667eea;
+      background: var(--accent-color);
       color: white;
       border: none;
       border-radius: 8px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: opacity 0.2s;
     }
 
     button:hover {
-      background: #5568d3;
+      opacity: 0.9;
     }
 
     button:disabled {
-      background: #cbd5e0;
+      opacity: 0.5;
       cursor: not-allowed;
     }
 
     .loading {
       text-align: center;
       padding: 20px;
-      color: #667eea;
+      color: var(--accent-color);
     }
 
     .error {
-      background: #fee;
-      border: 2px solid #fcc;
-      color: #c33;
+      background: var(--error-bg);
+      border: 2px solid var(--error-border);
+      color: var(--error-text);
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 16px;
@@ -113,13 +227,13 @@
       align-items: center;
       margin-bottom: 16px;
       padding-bottom: 16px;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid var(--border-color);
     }
 
     .company-name {
       font-size: 20px;
       font-weight: 700;
-      color: #667eea;
+      color: var(--accent-color);
     }
 
     .company-rating {
@@ -135,25 +249,33 @@
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
-      border-bottom: 1px solid #f7fafc;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .stat-label {
-      color: #64748b;
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
     .stat-value {
       font-weight: 600;
       font-size: 14px;
+      color: var(--text-primary);
     }
 
     .employee-card {
-      background: #f8fafc;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 16px;
       margin-bottom: 12px;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid var(--accent-color);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .employee-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .employee-header {
@@ -166,12 +288,12 @@
     .employee-name {
       font-weight: 700;
       font-size: 16px;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .employee-position {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin-top: 2px;
     }
 
@@ -183,20 +305,9 @@
       font-size: 14px;
     }
 
-    .effectiveness.high {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .effectiveness.medium {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .effectiveness.low {
-      background: #fee2e2;
-      color: #991b1b;
-    }
+    .effectiveness.high { background: #dcfce7; color: #15803d; }
+    .effectiveness.medium { background: #fef3c7; color: #92400e; }
+    .effectiveness.low { background: #fee2e2; color: #991b1b; }
 
     .stats-grid {
       display: grid;
@@ -208,13 +319,13 @@
     .stat-box {
       text-align: center;
       padding: 8px;
-      background: white;
+      background: var(--border-color);
       border-radius: 6px;
     }
 
     .stat-box-label {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-secondary);
       text-transform: uppercase;
       margin-bottom: 4px;
     }
@@ -222,7 +333,7 @@
     .stat-box-value {
       font-size: 16px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .status-badge {
@@ -234,61 +345,166 @@
       margin-top: 8px;
     }
 
-    .status-badge.online {
-      background: #dcfce7;
-      color: #15803d;
+    .status-badge.online { background: #dcfce7; color: #15803d; }
+    .status-badge.offline { background: #f1f5f9; color: #64748b; }
+    .status-badge.idle { background: #fef3c7; color: #92400e; }
+    .status-badge.hospital { background: #fee2e2; color: #991b1b; }
+
+    .employee-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
     }
 
-    .status-badge.offline {
-      background: #f1f5f9;
-      color: #64748b;
+    .employee-details.expanded {
+      max-height: 500px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
     }
 
-    .status-badge.hospital {
-      background: #fee2e2;
-      color: #991b1b;
+    .eff-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
     }
 
-    .hidden {
-      display: none;
+    .eff-item {
+      background: var(--border-color);
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
     }
+
+    .eff-label {
+      color: var(--text-secondary);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .eff-value {
+      font-weight: 700;
+      font-size: 14px;
+      margin-top: 2px;
+      color: var(--text-primary);
+    }
+
+    .eff-value.positive { color: #15803d; }
+    .eff-value.negative { color: #991b1b; }
+
+    .hidden { display: none; }
 
     .sync-info {
       text-align: center;
-      color: #64748b;
+      color: var(--text-secondary);
       font-size: 12px;
       margin-top: 8px;
+    }
+
+    .footer {
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      margin-top: 40px;
+      padding: 20px;
+    }
+
+    .footer a {
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      margin: 0 8px;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .close-modal {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .close-modal:hover {
+      color: var(--text-primary);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🏢 Torn Company Tracker</h1>
+    <div class="header">
+      <h1>🏢 Torn Company Tracker</h1>
+      <div class="dropdown">
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <div class="dropdown-content" id="menuDropdown">
+          <div class="dropdown-item" onclick="refreshData()" id="refreshBtn">
+            🔄 Refresh Data
+          </div>
+          <div class="dropdown-item" onclick="toggleDarkMode()">
+            <span id="darkModeIcon">🌙</span> Dark Mode
+          </div>
+          <div class="dropdown-item" onclick="showApiTerms()">
+            📄 API Terms
+          </div>
+          <div class="dropdown-item" onclick="showSettings()" id="settingsBtn" class="hidden">
+            ⚙️ Settings
+          </div>
+        </div>
+      </div>
+    </div>
     
     <div class="card" id="loginCard">
       <h2>Connect Your Company</h2>
       <div class="input-group">
-        <label for="apiKey">Torn API Key</label>
+        <label for="apiKey">
+          Torn API Key 
+          <span class="info-icon" onclick="showApiInfo()">?</span>
+        </label>
         <input 
           type="text" 
           id="apiKey" 
           placeholder="Enter your 16-character API key"
           autocomplete="off"
         >
+        <div class="disclaimer">
+          ⚠️ <strong>Demo Version:</strong> No data is saved. When you close this page, all data is lost. For historical tracking and charts, the full platform is coming soon.
+        </div>
       </div>
       <button id="loadBtn" onclick="loadCompanyData()">Load Company Data</button>
-      <div class="sync-info" id="syncInfo"></div>
     </div>
 
     <div class="card hidden" id="welcomeCard">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <h2 style="margin: 0;">Welcome, <span id="userName"></span>!</h2>
-          <div style="font-size: 14px; color: #64748b; margin-top: 4px;" id="companyNameDisplay"></div>
+          <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;" id="companyNameDisplay"></div>
         </div>
-        <button onclick="showSettings()" style="width: auto; padding: 8px 16px; font-size: 14px;">⚙️ Settings</button>
       </div>
-      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">
+      <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
         <span id="syncInfo2"></span>
       </div>
     </div>
@@ -300,12 +516,94 @@
       </div>
     </div>
     <div id="dataContainer"></div>
+
+    <div class="footer">
+      <div>Created and managed by <strong>Shmomelette [4104345]</strong></div>
+      <div style="margin-top: 8px;">
+        <a href="https://ko-fi.com/shmomelette" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Info Modal -->
+  <div id="apiModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal('apiModal')">&times;</span>
+      <h2>API Access Level</h2>
+      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">
+        <strong>Limited Access</strong> is recommended for this tool. It allows us to read your company data without accessing sensitive account information.
+      </p>
+      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">
+        Generate an API key in:<br>
+        <strong>Torn → Settings → API</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- API Terms Modal -->
+  <div id="termsModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <span class="close-modal" onclick="closeModal('termsModal')">&times;</span>
+      <h2>API Terms of Service</h2>
+      <div style="margin-top: 16px; color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
+        <p><strong>Data Storage:</strong> Demo version - no data stored</p>
+        <p><strong>Data Sharing:</strong> Nobody (demo runs in your browser only)</p>
+        <p><strong>Purpose:</strong> Display current employee stats</p>
+        <p><strong>Key Storage:</strong> Not stored (enter each session)</p>
+        <p><strong>Access Level:</strong> Limited Access recommended</p>
+        <p style="margin-top: 16px; font-size: 12px;">
+          This demo version does not save any data. Your API key is used only during your current session to fetch data from Torn's API. When you close this page, nothing is retained.
+        </p>
+      </div>
+    </div>
   </div>
 
   <script>
     let companyData = null;
     let userData = null;
     let currentApiKey = null;
+
+    // Dark mode
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const icon = document.getElementById('darkModeIcon');
+      icon.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+      toggleMenu();
+    }
+
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeIcon').textContent = '☀️';
+    }
+
+    function toggleMenu() {
+      document.getElementById('menuDropdown').classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    window.onclick = function(event) {
+      if (!event.target.matches('.menu-btn')) {
+        const dropdown = document.getElementById('menuDropdown');
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      }
+    }
+
+    function showApiInfo() {
+      document.getElementById('apiModal').style.display = 'block';
+    }
+
+    function showApiTerms() {
+      document.getElementById('termsModal').style.display = 'block';
+      toggleMenu();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
 
     async function loadCompanyData() {
       const apiKey = document.getElementById('apiKey').value.trim();
@@ -320,6 +618,19 @@
         return;
       }
 
+      await fetchCompanyData(apiKey);
+    }
+
+    async function refreshData() {
+      if (!currentApiKey) {
+        showError('No API key stored. Please reconnect.');
+        return;
+      }
+      toggleMenu();
+      await fetchCompanyData(currentApiKey);
+    }
+
+    async function fetchCompanyData(apiKey) {
       document.getElementById('errorContainer').innerHTML = '';
       document.getElementById('dataContainer').innerHTML = '';
       
@@ -327,19 +638,12 @@
       document.getElementById('loadBtn').disabled = true;
 
       try {
-        // First, get the user's Torn ID
         const userResponse = await fetch(
           `https://api.torn.com/user/?selections=basic&key=${apiKey}`,
-          {
-            method: 'GET',
-            mode: 'cors',
-            headers: { 'Accept': 'application/json' }
-          }
+          { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
         );
 
-        if (!userResponse.ok) {
-          throw new Error(`HTTP error! status: ${userResponse.status}`);
-        }
+        if (!userResponse.ok) throw new Error(`HTTP error! status: ${userResponse.status}`);
 
         const userDataRaw = await userResponse.json();
 
@@ -352,18 +656,13 @@
         userData = userDataRaw;
         currentApiKey = apiKey;
 
-        // Now get company data
         const companyUrl = `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`;
         
         const response = await fetch(companyUrl, {
-          method: 'GET',
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
+          method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' }
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
 
@@ -373,7 +672,6 @@
           throw new Error(`${errorMsg} (Code: ${errorCode})`);
         }
 
-        // CRITICAL: Check if user is the director
         const companyInfo = data.company || data.company_detailed;
         if (companyInfo.director !== userData.player_id) {
           throw new Error('⛔ You must be a company director to use this platform. Only directors can track employee stats.');
@@ -381,11 +679,11 @@
 
         companyData = data;
         
-        // Hide login card, show welcome card
         document.getElementById('loginCard').classList.add('hidden');
         document.getElementById('welcomeCard').classList.remove('hidden');
+        document.getElementById('refreshBtn').classList.remove('hidden');
+        document.getElementById('settingsBtn').classList.remove('hidden');
         
-        // Set welcome message
         document.getElementById('userName').textContent = userData.name;
         const companyName = (data.company && data.company.name) || 'Your Company';
         document.getElementById('companyNameDisplay').textContent = companyName;
@@ -418,16 +716,24 @@
         document.getElementById('welcomeCard').classList.add('hidden');
         document.getElementById('dataContainer').innerHTML = '';
         document.getElementById('apiKey').value = '';
+        document.getElementById('refreshBtn').classList.add('hidden');
+        document.getElementById('settingsBtn').classList.add('hidden');
         companyData = null;
         userData = null;
         currentApiKey = null;
       }
+      toggleMenu();
     }
 
     function showError(message) {
       document.getElementById('errorContainer').innerHTML = `
         <div class="card error">${message}</div>
       `;
+    }
+
+    function toggleEmployeeDetails(employeeId) {
+      const details = document.getElementById(`details-${employeeId}`);
+      details.classList.toggle('expanded');
     }
 
     function displayCompanyData(data) {
@@ -469,6 +775,9 @@
 
         <div class="card">
           <h2>📊 Employees (${employeeCount})</h2>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+            💡 Tap any employee to see effectiveness breakdown
+          </div>
       `;
 
       const sortedEmployees = Object.entries(employees).sort((a, b) => {
@@ -484,8 +793,10 @@
         const statusClass = employee.last_action.status.toLowerCase();
         const statusText = employee.last_action.status;
 
+        const effBreakdown = employee.effectiveness || {};
+
         html += `
-          <div class="employee-card">
+          <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
             <div class="employee-header">
               <div>
                 <div class="employee-name">${employee.name} [${id}]</div>
@@ -509,13 +820,46 @@
               </div>
             </div>
 
-            <div style="margin-top: 8px; font-size: 12px; color: #64748b;">
+            <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
               Total Stats: ${totalStats.toLocaleString()} • 
               Wage: $${employee.wage.toLocaleString()}/day •
               Days: ${employee.days_in_company}
             </div>
 
             <span class="status-badge ${statusClass}">${statusText} • ${employee.last_action.relative}</span>
+
+            <div class="employee-details" id="details-${id}">
+              <h3 style="font-size: 14px; color: var(--accent-color); margin-bottom: 8px;">Effectiveness Breakdown</h3>
+              <div class="eff-breakdown">
+                <div class="eff-item">
+                  <div class="eff-label">Working Stats</div>
+                  <div class="eff-value positive">+${effBreakdown.working_stats || 0}%</div>
+                </div>
+                <div class="eff-item">
+                  <div class="eff-label">Settled In</div>
+                  <div class="eff-value positive">+${effBreakdown.settled_in || 0}%</div>
+                </div>
+                <div class="eff-item">
+                  <div class="eff-label">Merits</div>
+                  <div class="eff-value positive">+${effBreakdown.merits || 0}%</div>
+                </div>
+                <div class="eff-item">
+                  <div class="eff-label">Management</div>
+                  <div class="eff-value positive">+${effBreakdown.management || 0}%</div>
+                </div>
+                <div class="eff-item">
+                  <div class="eff-label">Addiction</div>
+                  <div class="eff-value ${effBreakdown.addiction < 0 ? 'negative' : 'positive'}">${effBreakdown.addiction || 0}%</div>
+                </div>
+                <div class="eff-item">
+                  <div class="eff-label">Inactivity</div>
+                  <div class="eff-value ${effBreakdown.inactivity < 0 ? 'negative' : 'positive'}">${effBreakdown.inactivity || 0}%</div>
+                </div>
+              </div>
+              <div style="margin-top: 12px; padding: 8px; background: var(--border-color); border-radius: 4px; text-align: center;">
+                <strong>Total Effectiveness: ${eff}%</strong>
+              </div>
+            </div>
           </div>
         `;
       });
