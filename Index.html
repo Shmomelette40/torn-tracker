@@ -305,11 +305,9 @@
         return;
       }
 
-      // Clear previous data and errors
       document.getElementById('errorContainer').innerHTML = '';
       document.getElementById('dataContainer').innerHTML = '';
       
-      // Show loading state
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadBtn').disabled = true;
 
@@ -330,7 +328,6 @@
 
         const data = await response.json();
 
-        // Check for API errors
         if (data.error) {
           const errorMsg = data.error.error || 'Unknown API error';
           const errorCode = data.error.code || '';
@@ -340,7 +337,6 @@
         companyData = data;
         displayCompanyData(data);
         
-        // Update sync info
         const now = new Date();
         document.getElementById('syncInfo').textContent = 
           `✓ Synced at ${now.toLocaleTimeString()}`;
@@ -373,12 +369,11 @@
       const employees = data.company_employees;
       const employeeCount = Object.keys(employees).length;
 
-      // Company overview card
       let html = `
         <div class="card">
           <div class="company-header">
             <div class="company-name">${detailed.ID}</div>
-            <div class="company-rating">${detailed.company_funds.toLocaleString()}</div>
+            <div class="company-rating">$${detailed.company_funds.toLocaleString()}</div>
           </div>
           
           <div class="stat-row">
@@ -403,12 +398,10 @@
           <h2>📊 Employees (${employeeCount})</h2>
       `;
 
-      // Sort employees by effectiveness
       const sortedEmployees = Object.entries(employees).sort((a, b) => {
         return (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0);
       });
 
-      // Employee cards
       sortedEmployees.forEach(([id, employee]) => {
         const eff = employee.effectiveness?.total || 0;
         const effClass = eff >= 70 ? 'high' : eff >= 40 ? 'medium' : 'low';
