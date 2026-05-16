@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torn Company Tracker - Proof of Concept</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: white;
+      margin-bottom: 20px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #667eea;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+    }
+
+    .error {
+      background: #fee;
+      border: 2px solid #fcc;
+      color: #c33;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .company-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .company-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .company-rating {
+      background: #fbbf24;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f7fafc;
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .employee-card {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .employee-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .employee-name {
+      font-weight: 700;
+      font-size: 16px;
+      color: #1e293b;
+    }
+
+    .employee-position {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .effectiveness {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .effectiveness.high {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .effectiveness.medium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .effectiveness.low {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat-box {
+      text-align: center;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+    }
+
+    .stat-box-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .stat-box-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .status-badge.online {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.offline {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .status-badge.hospital {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .sync-info {
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏢 Torn Company Tracker</h1>
+    
+    <div class="card">
+      <h2>Connect Your Company</h2>
+      <div class="input-group">
+        <label for="apiKey">Torn API Key</label>
+        <input 
+          type="text" 
+          id="apiKey" 
+          placeholder="Enter your 16-character API key"
+          autocomplete="off"
+        >
+      </div>
+      <button id="loadBtn" onclick="loadCompanyData()">Load Company Data</button>
+      <div class="sync-info" id="syncInfo"></div>
+    </div>
+
+    <div id="errorContainer"></div>
+    <div id="loadingContainer" class="hidden">
+      <div class="card">
+        <div class="loading">⏳ Loading company data...</div>
+      </div>
+    </div>
+    <div id="dataContainer"></div>
+  </div>
+
+  <script>
+    let companyData = null;
+
+    async function loadCompanyData() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      
+      if (!apiKey) {
+        showError('Please enter your API key');
+        return;
+      }
+
+      if (apiKey.length !== 16) {
+        showError('API key should be 16 characters long');
+        return;
+      }
+
+      // Clear previous data and errors
+      document.getElementById('errorContainer').innerHTML = '';
+      document.getElementById('dataContainer').innerHTML = '';
+      
+      // Show loading state
+      document.getElementById('loadingContainer').classList.remove('hidden');
+      document.getElementById('loadBtn').disabled = true;
+
+      try {
+        const url = `https://api.torn.com/company/?selections=detailed,employees&key=${apiKey}`;
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check for API errors
+        if (data.error) {
+          const errorMsg = data.error.error || 'Unknown API error';
+          const errorCode = data.error.code || '';
+          throw new Error(`${errorMsg} (Code: ${errorCode})`);
+        }
+
+        companyData = data;
+        displayCompanyData(data);
+        
+        // Update sync info
+        const now = new Date();
+        document.getElementById('syncInfo').textContent = 
+          `✓ Synced at ${now.toLocaleTimeString()}`;
+
+      } catch (error) {
+        console.error('Full error:', error);
+        let errorMessage = error.message;
+        
+        if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+          errorMessage = 'Network error - try opening this file in Safari or Chrome browser directly (not in preview)';
+        }
+        
+        showError(`Failed to load data: ${errorMessage}`);
+      } finally {
+        document.getElementById('loadingContainer').classList.add('hidden');
+        document.getElementById('loadBtn').disabled = false;
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('errorContainer').innerHTML = `
+        <div class="card error">${message}</div>
+      `;
+    }
+
+    function displayCompanyData(data) {
+      const container = document.getElementById('dataContainer');
+      
+      const detailed = data.company_detailed;
+      const employees = data.company_employees;
+      const employeeCount = Object.keys(employees).length;
+
+      // Company overview card
+      let html = `
+        <div class="card">
+          <div class="company-header">
+            <div class="company-name">${detailed.ID}</div>
+            <div class="company-rating">${detailed.company_funds.toLocaleString()}</div>
+          </div>
+          
+          <div class="stat-row">
+            <span class="stat-label">Efficiency</span>
+            <span class="stat-value">${detailed.efficiency}%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Environment</span>
+            <span class="stat-value">${detailed.environment}%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Employees</span>
+            <span class="stat-value">${employeeCount} / ${detailed.upgrades.company_size}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Company Value</span>
+            <span class="stat-value">$${detailed.value.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>📊 Employees (${employeeCount})</h2>
+      `;
+
+      // Sort employees by effectiveness
+      const sortedEmployees = Object.entries(employees).sort((a, b) => {
+        return (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0);
+      });
+
+      // Employee cards
+      sortedEmployees.forEach(([id, employee]) => {
+        const eff = employee.effectiveness?.total || 0;
+        const effClass = eff >= 70 ? 'high' : eff >= 40 ? 'medium' : 'low';
+        
+        const totalStats = employee.manual_labor + employee.intelligence + employee.endurance;
+        
+        const statusClass = employee.last_action.status.toLowerCase();
+        const statusText = employee.last_action.status;
+
+        html += `
+          <div class="employee-card">
+            <div class="employee-header">
+              <div>
+                <div class="employee-name">${employee.name}</div>
+                <div class="employee-position">${employee.position}</div>
+              </div>
+              <div class="effectiveness ${effClass}">${eff}%</div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-box-label">Manual</div>
+                <div class="stat-box-value">${employee.manual_labor.toLocaleString()}</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-label">Intel</div>
+                <div class="stat-box-value">${employee.intelligence.toLocaleString()}</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-label">Endurance</div>
+                <div class="stat-box-value">${employee.endurance.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 8px; font-size: 12px; color: #64748b;">
+              Total Stats: ${totalStats.toLocaleString()} • 
+              Wage: $${employee.wage.toLocaleString()}/day •
+              Days: ${employee.days_in_company}
+            </div>
+
+            <span class="status-badge ${statusClass}">${statusText} • ${employee.last_action.relative}</span>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
