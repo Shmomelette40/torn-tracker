@@ -265,7 +265,7 @@
   <div class="container">
     <h1>🏢 Torn Company Tracker</h1>
     
-    <div class="card">
+    <div class="card" id="loginCard">
       <h2>Connect Your Company</h2>
       <div class="input-group">
         <label for="apiKey">Torn API Key</label>
@@ -280,6 +280,19 @@
       <div class="sync-info" id="syncInfo"></div>
     </div>
 
+    <div class="card hidden" id="welcomeCard">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0;">Welcome, <span id="userName"></span>!</h2>
+          <div style="font-size: 14px; color: #64748b; margin-top: 4px;" id="companyNameDisplay"></div>
+        </div>
+        <button onclick="showSettings()" style="width: auto; padding: 8px 16px; font-size: 14px;">⚙️ Settings</button>
+      </div>
+      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">
+        <span id="syncInfo2"></span>
+      </div>
+    </div>
+
     <div id="errorContainer"></div>
     <div id="loadingContainer" class="hidden">
       <div class="card">
@@ -291,6 +304,8 @@
 
   <script>
     let companyData = null;
+    let userData = null;
+    let currentApiKey = null;
 
     async function loadCompanyData() {
       const apiKey = document.getElementById('apiKey').value.trim();
@@ -312,14 +327,38 @@
       document.getElementById('loadBtn').disabled = true;
 
       try {
-        const url = `https://api.torn.com/company/?selections=detailed,employees&key=${apiKey}`;
+        // First, get the user's Torn ID
+        const userResponse = await fetch(
+          `https://api.torn.com/user/?selections=basic&key=${apiKey}`,
+          {
+            method: 'GET',
+            mode: 'cors',
+            headers: { 'Accept': 'application/json' }
+          }
+        );
+
+        if (!userResponse.ok) {
+          throw new Error(`HTTP error! status: ${userResponse.status}`);
+        }
+
+        const userDataRaw = await userResponse.json();
+
+        if (userDataRaw.error) {
+          const errorMsg = userDataRaw.error.error || 'Unknown API error';
+          const errorCode = userDataRaw.error.code || '';
+          throw new Error(`${errorMsg} (Code: ${errorCode})`);
+        }
+
+        userData = userDataRaw;
+        currentApiKey = apiKey;
+
+        // Now get company data
+        const companyUrl = `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`;
         
-        const response = await fetch(url, {
+        const response = await fetch(companyUrl, {
           method: 'GET',
           mode: 'cors',
-          headers: {
-            'Accept': 'application/json',
-          }
+          headers: { 'Accept': 'application/json' }
         });
 
         if (!response.ok) {
@@ -334,25 +373,54 @@
           throw new Error(`${errorMsg} (Code: ${errorCode})`);
         }
 
+        // CRITICAL: Check if user is the director
+        const companyInfo = data.company || data.company_detailed;
+        if (companyInfo.director !== userData.player_id) {
+          throw new Error('⛔ You must be a company director to use this platform. Only directors can track employee stats.');
+        }
+
         companyData = data;
+        
+        // Hide login card, show welcome card
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('welcomeCard').classList.remove('hidden');
+        
+        // Set welcome message
+        document.getElementById('userName').textContent = userData.name;
+        const companyName = (data.company && data.company.name) || 'Your Company';
+        document.getElementById('companyNameDisplay').textContent = companyName;
+        
         displayCompanyData(data);
         
         const now = new Date();
-        document.getElementById('syncInfo').textContent = 
-          `✓ Synced at ${now.toLocaleTimeString()}`;
+        document.getElementById('syncInfo2').textContent = 
+          `✓ Last synced at ${now.toLocaleTimeString()}`;
 
       } catch (error) {
         console.error('Full error:', error);
         let errorMessage = error.message;
         
         if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
-          errorMessage = 'Network error - try opening this file in Safari or Chrome browser directly (not in preview)';
+          errorMessage = 'Network error - please check your connection';
         }
         
-        showError(`Failed to load data: ${errorMessage}`);
+        showError(errorMessage);
       } finally {
         document.getElementById('loadingContainer').classList.add('hidden');
         document.getElementById('loadBtn').disabled = false;
+      }
+    }
+
+    function showSettings() {
+      const disconnect = confirm('Do you want to disconnect and enter a different API key?');
+      if (disconnect) {
+        document.getElementById('loginCard').classList.remove('hidden');
+        document.getElementById('welcomeCard').classList.add('hidden');
+        document.getElementById('dataContainer').innerHTML = '';
+        document.getElementById('apiKey').value = '';
+        companyData = null;
+        userData = null;
+        currentApiKey = null;
       }
     }
 
@@ -368,11 +436,12 @@
       const detailed = data.company_detailed;
       const employees = data.company_employees;
       const employeeCount = Object.keys(employees).length;
+      const companyName = (data.company && data.company.name) || 'Your Company';
 
       let html = `
         <div class="card">
           <div class="company-header">
-            <div class="company-name">${detailed.ID}</div>
+            <div class="company-name">${companyName}</div>
             <div class="company-rating">$${detailed.company_funds.toLocaleString()}</div>
           </div>
           
@@ -387,6 +456,10 @@
           <div class="stat-row">
             <span class="stat-label">Employees</span>
             <span class="stat-value">${employeeCount} / ${detailed.upgrades.company_size}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Company Funds</span>
+            <span class="stat-value">$${detailed.company_funds.toLocaleString()}</span>
           </div>
           <div class="stat-row">
             <span class="stat-label">Company Value</span>
@@ -415,7 +488,7 @@
           <div class="employee-card">
             <div class="employee-header">
               <div>
-                <div class="employee-name">${employee.name}</div>
+                <div class="employee-name">${employee.name} [${id}]</div>
                 <div class="employee-position">${employee.position}</div>
               </div>
               <div class="effectiveness ${effClass}">${eff}%</div>
