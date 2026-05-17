@@ -94,8 +94,37 @@
       margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid var(--border-color);
     }
     .company-name { font-size: 20px; font-weight: 700; color: var(--accent-color); }
-    .company-type-badge { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .company-type-badge {
+      display: inline-block; margin-top: 6px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+      background: rgba(102,126,234,0.13); color: var(--accent-color);
+      border: 1px solid rgba(102,126,234,0.3); padding: 3px 10px; border-radius: 20px;
+    }
     .company-rating { background: #fbbf24; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    /* Optimal assignment styles */
+    .assign-intro { font-size: 12px; color: var(--text-secondary); margin: 12px 0 10px; line-height: 1.5; }
+    .assign-card {
+      border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px;
+      margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .assign-card.mismatch { border-left: 4px solid #f59e0b; }
+    .assign-card.ok { border-left: 4px solid #10b981; }
+    .assign-left { flex: 1; min-width: 0; }
+    .assign-role { font-weight: 700; font-size: 13px; color: var(--accent-color); margin-bottom: 2px; }
+    .assign-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .assign-current { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .assign-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
+    .assign-score { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+    .assign-score-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; }
+    .assign-change { font-size: 11px; margin-top: 3px; font-weight: 600; }
+    .assign-change.move { color: #f59e0b; }
+    .assign-change.stay { color: #10b981; }
+    .assign-unassigned { font-size: 12px; color: var(--text-secondary); padding: 8px 0; border-top: 1px solid var(--border-color); margin-top: 4px; }
+    .assign-legend { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+    .assign-legend span { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: #10b981; }
+    .dot-amber { background: #f59e0b; }
     .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
     .stat-label { color: var(--text-secondary); font-size: 14px; }
     .stat-value { font-weight: 600; font-size: 14px; color: var(--text-primary); }
@@ -782,6 +811,9 @@
     }
 
     // ─── Suggestions engine ───────────────────────────────────────────────────
+    // Low-value roles to deprioritise (fill last with whoever is left over)
+    const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
+
     function scoreFit(employee, weights) {
       const total = weights.manual + weights.intelligence + weights.endurance;
       if (total === 0) return 0;
@@ -792,17 +824,115 @@
       );
     }
 
-    function buildSuggestions(companyType, employees) {
+    /**
+     * Greedy optimal assignment:
+     * 1. Separate roles into priority (valuable) and low-value buckets.
+     * 2. For priority roles, greedily assign the best unassigned employee.
+     *    - Manager role gets the employee with the highest (INT + END) sum.
+     *    - Marketer role gets the employee with the 2nd highest (INT + END) sum.
+     *    - All other priority roles: greedy stat-score match.
+     * 3. Remaining employees fill low-value roles.
+     * Returns: array of { role, employee, score, currentRole, isMismatch }
+     */
+    function buildOptimalAssignment(companyType, employees) {
       const roles = COMPANY_ROLES[companyType];
       if (!roles) return null;
+
       const empList = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
-      return Object.entries(roles).map(([role, weights]) => ({
-        role,
-        scored: empList
-          .map(e => ({ name: e.name, id: e.id, score: scoreFit(e, weights), current: e.position }))
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3)
-      }));
+      const assigned  = new Map(); // empId → role
+      const roleAssigned = new Map(); // role → employee
+      const unassigned = new Set(empList.map(e => e.id));
+
+      const priorityRoles = Object.keys(roles).filter(r => !LOW_VALUE_ROLES.has(r));
+      const lowValueRoles  = Object.keys(roles).filter(r =>  LOW_VALUE_ROLES.has(r));
+
+      // Helper: pick best unassigned employee for a given role weights
+      function pickBest(weights, excludeIds = new Set()) {
+        let best = null, bestScore = -1;
+        for (const e of empList) {
+          if (!unassigned.has(e.id) || excludeIds.has(e.id)) continue;
+          const s = scoreFit(e, weights);
+          if (s > bestScore) { bestScore = s; best = e; }
+        }
+        return best ? { emp: best, score: bestScore } : null;
+      }
+
+      // Special handling: Manager → highest (INT + END); Marketer → 2nd highest
+      const hasManager  = priorityRoles.includes('Manager')  || priorityRoles.includes('Store Manager') || priorityRoles.includes('Farm Manager') || priorityRoles.includes('Site Manager') || priorityRoles.includes('Warehouse Manager');
+      const hasMarketer = priorityRoles.includes('Marketer') || priorityRoles.includes('Marketing Manager') || priorityRoles.includes('Advertising Manager');
+
+      const managerRoleKey  = priorityRoles.find(r => r.toLowerCase().includes('manager'));
+      const marketerRoleKey = priorityRoles.find(r => r.toLowerCase().includes('market'));
+
+      // Sort employees by INT + END descending for leadership picks
+      const byLeaderScore = [...empList].sort((a, b) =>
+        (b.intelligence + b.endurance) - (a.intelligence + a.endurance)
+      );
+
+      // Assign Manager
+      if (managerRoleKey && unassigned.size > 0) {
+        const pick = byLeaderScore.find(e => unassigned.has(e.id));
+        if (pick) {
+          unassigned.delete(pick.id);
+          assigned.set(pick.id, managerRoleKey);
+          roleAssigned.set(managerRoleKey, { emp: pick, score: scoreFit(pick, roles[managerRoleKey]) });
+        }
+      }
+
+      // Assign Marketer (2nd highest INT+END)
+      if (marketerRoleKey && unassigned.size > 0) {
+        const pick = byLeaderScore.find(e => unassigned.has(e.id));
+        if (pick) {
+          unassigned.delete(pick.id);
+          assigned.set(pick.id, marketerRoleKey);
+          roleAssigned.set(marketerRoleKey, { emp: pick, score: scoreFit(pick, roles[marketerRoleKey]) });
+        }
+      }
+
+      // Assign remaining priority roles greedily
+      for (const role of priorityRoles) {
+        if (roleAssigned.has(role)) continue; // already assigned above
+        if (unassigned.size === 0) break;
+        const pick = pickBest(roles[role]);
+        if (pick) {
+          unassigned.delete(pick.emp.id);
+          assigned.set(pick.emp.id, role);
+          roleAssigned.set(role, pick);
+        }
+      }
+
+      // Fill low-value roles with whoever remains
+      for (const role of lowValueRoles) {
+        if (unassigned.size === 0) break;
+        const pick = pickBest(roles[role]);
+        if (pick) {
+          unassigned.delete(pick.emp.id);
+          assigned.set(pick.emp.id, role);
+          roleAssigned.set(role, pick);
+        }
+      }
+
+      // Build result array ordered: priority roles first, then low-value
+      const result = [];
+      for (const role of [...priorityRoles, ...lowValueRoles]) {
+        const entry = roleAssigned.get(role);
+        if (entry) {
+          result.push({
+            role,
+            employee: entry.emp,
+            score: entry.score,
+            currentRole: entry.emp.position,
+            isMismatch: entry.emp.position !== role,
+            isLowValue: LOW_VALUE_ROLES.has(role)
+          });
+        } else {
+          result.push({ role, employee: null, score: 0, currentRole: null, isMismatch: false, isLowValue: LOW_VALUE_ROLES.has(role) });
+        }
+      }
+
+      // Employees with no matching role slot
+      const leftover = empList.filter(e => unassigned.has(e.id));
+      return { assignments: result, unassigned: leftover };
     }
 
     // ─── Main display ─────────────────────────────────────────────────────────
@@ -822,7 +952,7 @@
           <div class="company-header">
             <div>
               <div class="company-name">${companyName}</div>
-              ${companyType ? `<div class="company-type-badge">🏷️ ${companyType}</div>` : ''}
+              ${companyType ? `<div><span class="company-type-badge">🏷️ ${companyType}</span></div>` : ''}
             </div>
             <div class="company-rating">$${detailed.company_funds.toLocaleString()}</div>
           </div>
@@ -892,30 +1022,72 @@
 
       html += `</div></div>`;
 
-      // ── Suggestions ────────────────────────────────────────────────────────
-      const suggestions = buildSuggestions(companyType, employees);
+      // ── Optimal Assignment ─────────────────────────────────────────────────
+      const optResult = buildOptimalAssignment(companyType, employees);
       html += `
         <div class="card">
           <div class="section-header" onclick="toggleSection('suggestionsBody','suggestionsToggle')">
-            <h2>💡 Role Suggestions</h2>
+            <h2>💡 Optimal Role Assignment</h2>
             <button class="collapse-btn" id="suggestionsToggle">▲</button>
           </div>
           <div class="collapsible-body" id="suggestionsBody" style="max-height: 9999px;">`;
 
-      if (!suggestions) {
+      if (!optResult) {
         html += `<div class="no-data-note" style="margin-top: 12px;">No role data available for <strong>${companyType || 'this company type'}</strong>.</div>`;
       } else {
-        html += `<div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0 8px;">Best-fit employees per role based on recommended stat weighting.</div>`;
-        suggestions.forEach(({ role, scored }) => {
-          html += `<div class="suggestion-card"><div class="suggestion-role">${role}</div>`;
-          scored.forEach((s, i) => {
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
-            const cls   = i === 0 ? 'great' : i === 1 ? 'good' : 'weak';
-            const cur   = s.current === role ? ' ✓' : '';
-            html += `<div class="suggestion-row"><span class="suggestion-name">${medal} ${s.name}${cur}</span><span class="suggestion-score ${cls}">Score: ${s.score.toLocaleString()}</span></div>`;
-          });
-          html += `</div>`;
+        const moveCount = optResult.assignments.filter(a => a.employee && a.isMismatch && !a.isLowValue).length;
+        html += `
+          <div class="assign-intro">
+            Best employee→role assignment based on stat weights and leadership priority.
+            Manager &amp; Marketer go to your highest INT+END employees first.
+            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner</strong> roles are filled last as low-priority.` : ''}
+          </div>
+          <div class="assign-legend">
+            <span><span class="dot dot-green"></span> Already in correct role</span>
+            <span><span class="dot dot-amber"></span> Should move</span>
+          </div>`;
+
+        optResult.assignments.forEach(({ role, employee, score, currentRole, isMismatch, isLowValue }) => {
+          if (!employee) {
+            html += `<div class="assign-card" style="opacity:0.5;border-left:4px solid #cbd5e1;">
+              <div class="assign-left">
+                <div class="assign-role">${role}</div>
+                <div class="assign-name" style="color:var(--text-secondary);">— No employee available —</div>
+              </div>
+            </div>`;
+            return;
+          }
+          const cardClass = isMismatch ? 'mismatch' : 'ok';
+          const changeLabel = isMismatch
+            ? `Move from: ${currentRole}`
+            : `✓ Already in role`;
+          const changeClass = isMismatch ? 'move' : 'stay';
+          html += `<div class="assign-card ${cardClass}${isLowValue ? '" style="opacity:0.7' : ''}">
+            <div class="assign-left">
+              <div class="assign-role">${role}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}</div>
+              <div class="assign-name">${employee.name} [${employee.id}]</div>
+              <div class="assign-change ${changeClass}">${changeLabel}</div>
+            </div>
+            <div class="assign-right">
+              <div class="assign-score">${score.toLocaleString()}</div>
+              <div class="assign-score-label">Fit Score</div>
+            </div>
+          </div>`;
         });
+
+        if (optResult.unassigned.length > 0) {
+          html += `<div class="assign-unassigned">⚠️ No role slot for: ${optResult.unassigned.map(e => e.name).join(', ')} — more employees than defined roles.</div>`;
+        }
+
+        if (moveCount > 0) {
+          html += `<div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.1);border-radius:6px;font-size:12px;color:var(--text-secondary);">
+            <strong style="color:#92400e;">⚠️ ${moveCount} role change${moveCount > 1 ? 's' : ''} suggested</strong> — reassigning these employees to their optimal roles should improve overall company effectiveness.
+          </div>`;
+        } else {
+          html += `<div style="margin-top:10px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:12px;color:#065f46;">
+            <strong>✅ All employees are in their optimal roles!</strong>
+          </div>`;
+        }
       }
       html += `</div></div>`;
 
