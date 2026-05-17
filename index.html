@@ -735,6 +735,33 @@
         }
 
         companyData = data;
+
+        // ── Fetch employee levels via public user profiles (batched) ──────────
+        // The company/employees endpoint doesn't include player level.
+        // We fetch levels separately using the torn/user endpoint with IDs.
+        try {
+          const empIds = Object.keys(data.company_employees).join(',');
+          if (empIds) {
+            const lvlResp = await fetch(
+              `https://api.torn.com/user/${empIds}?selections=profile&key=${apiKey}`,
+              { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
+            );
+            if (lvlResp.ok) {
+              const lvlData = await lvlResp.json();
+              if (!lvlData.error) {
+                // If single employee, API returns the object directly (not wrapped by ID)
+                const isMulti = Object.keys(data.company_employees).length > 1;
+                for (const [eid, emp] of Object.entries(data.company_employees)) {
+                  const profile = isMulti ? lvlData[eid] : lvlData;
+                  if (profile && profile.level) emp.level = profile.level;
+                }
+              }
+            }
+          }
+        } catch (lvlErr) {
+          console.warn('[TCT] Could not fetch employee levels:', lvlErr);
+        }
+        // ─────────────────────────────────────────────────────────────────────
         document.getElementById('loginCard').classList.add('hidden');
         document.getElementById('welcomeCard').classList.remove('hidden');
         document.getElementById('refreshBtn').classList.remove('hidden');
@@ -935,6 +962,21 @@
       return { assignments: result, unassigned: leftover };
     }
 
+    // ─── Torn company type ID → name map ─────────────────────────────────────
+    // The API returns company_type as a numeric ID, not a string name
+    const COMPANY_TYPE_MAP = {
+      1: "Adult Novelties", 2: "Amusement Park", 3: "Candle Shop", 4: "Car Dealership",
+      5: "Clothing Store", 6: "Cruise Line", 7: "Cyber Cafe", 8: "Detective Agency",
+      9: "Farm", 10: "Firework Stand", 11: "Fitness Center", 12: "Flower Shop",
+      13: "Furniture Store", 14: "Game Shop", 15: "Gas Station", 16: "Gents Strip Club",
+      17: "Grocery Store", 18: "Gun Shop", 19: "Hair Salon", 20: "Ladies Strip Club",
+      21: "Law Firm", 22: "Lingerie Store", 23: "Logistics Management", 24: "Meat Warehouse",
+      25: "Mechanic Shop", 26: "Mining Corporation", 27: "Music Store", 28: "Nightclub",
+      29: "Oil Rig", 30: "Private Security Firm", 31: "Property Broker", 32: "Pub",
+      33: "Restaurant", 34: "Software Corporation", 35: "Sweet Shop",
+      36: "Television Network", 37: "Theater", 38: "Toy Shop", 39: "Zoo"
+    };
+
     // ─── Main display ─────────────────────────────────────────────────────────
     function displayCompanyData(data) {
       const container    = document.getElementById('dataContainer');
@@ -943,7 +985,20 @@
       const profile      = data.company;
       const employeeCount = Object.keys(employees).length;
       const companyName  = (profile && profile.name) || 'Your Company';
-      const companyType  = (profile && profile.company_type_name) || (detailed && detailed.company_type) || '';
+
+      // Resolve company type: try name string first, fall back to numeric ID lookup
+      const rawType = (profile && (profile.company_type_name || profile.company_type)) ||
+                      (detailed && detailed.company_type) || '';
+      const companyType = typeof rawType === 'number'
+        ? (COMPANY_TYPE_MAP[rawType] || `Type ${rawType}`)
+        : (rawType || '');
+
+      // Debug: log raw API fields so we can trace any future mismatch
+      console.log('[TCT] profile.company_type:', profile && profile.company_type,
+                  '| profile.company_type_name:', profile && profile.company_type_name,
+                  '| detailed.company_type:', detailed && detailed.company_type,
+                  '| resolved →', companyType);
+
       const lastCustomers = (profile && profile.daily_customers != null) ? profile.daily_customers : null;
       const lastIncome    = (profile && profile.weekly_income   != null) ? profile.weekly_income   : null;
 
@@ -982,7 +1037,9 @@
           const totalStats = emp.manual_labor + emp.intelligence + emp.endurance;
           const statusClass = emp.last_action.status.toLowerCase();
           const eb          = emp.effectiveness || {};
-          const level        = emp.level ? `Lv ${emp.level}` : '';
+          // level may come as emp.level or emp.revive_setting or be absent entirely
+          const levelNum = emp.level || emp.employee_level || null;
+          const level = levelNum ? `Lv ${levelNum}` : '';
 
           html += `
             <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
