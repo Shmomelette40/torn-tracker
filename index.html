@@ -6,12 +6,7 @@
   <title>Torn Company Tracker | Employee Stats Dashboard</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --bg-gradient-start: #667eea;
       --bg-gradient-end: #764ba2;
@@ -24,7 +19,6 @@
       --error-border: #fcc;
       --error-text: #c33;
     }
-
     body.dark-mode {
       --bg-gradient-start: #1a1a2e;
       --bg-gradient-end: #16213e;
@@ -37,7 +31,6 @@
       --error-border: #7f1d1d;
       --error-text: #fca5a5;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
@@ -46,412 +39,128 @@
       color: var(--text-primary);
       transition: background 0.3s ease;
     }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      color: white;
-      font-size: 24px;
-    }
-
+    .container { max-width: 600px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: white; font-size: 24px; }
     .menu-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      font-size: 24px;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px;
+      width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
     }
-
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
+    .dropdown { position: relative; display: inline-block; }
     .dropdown-content {
-      display: none;
-      position: absolute;
-      right: 0;
-      background: var(--card-bg);
-      min-width: 200px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      border-radius: 8px;
-      z-index: 1000;
-      margin-top: 8px;
+      display: none; position: absolute; right: 0; background: var(--card-bg);
+      min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px; z-index: 1000; margin-top: 8px;
     }
-
-    .dropdown-content.show {
-      display: block;
-    }
-
+    .dropdown-content.show { display: block; }
     .dropdown-item {
-      padding: 12px 16px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-primary);
+      padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 8px; color: var(--text-primary);
     }
-
-    .dropdown-item:last-child {
-      border-bottom: none;
-    }
-
-    .dropdown-item:hover {
-      background: var(--border-color);
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      font-size: 18px;
-      margin-bottom: 12px;
-      color: var(--accent-color);
-    }
-
-    .input-group {
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: var(--border-color); }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    h2 { font-size: 18px; margin-bottom: 12px; color: var(--accent-color); }
+    .input-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 6px; }
     .info-icon {
-      cursor: pointer;
-      background: var(--accent-color);
-      color: white;
-      border-radius: 50%;
-      width: 16px;
-      height: 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
+      cursor: pointer; background: var(--accent-color); color: white; border-radius: 50%;
+      width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: bold;
     }
-
     input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.2s;
-      background: var(--card-bg);
-      color: var(--text-primary);
+      width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px;
+      font-size: 16px; transition: border-color 0.2s; background: var(--card-bg); color: var(--text-primary);
     }
-
-    input:focus {
-      outline: none;
-      border-color: var(--accent-color);
-    }
-
+    input:focus { outline: none; border-color: var(--accent-color); }
     .disclaimer {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 8px;
-      padding: 8px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 4px;
+      font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 8px;
+      background: rgba(102, 126, 234, 0.1); border-radius: 4px;
     }
-
     button {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent-color);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      width: 100%; padding: 14px; background: var(--accent-color); color: white; border: none;
+      border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
     }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: var(--accent-color);
-    }
-
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .loading { text-align: center; padding: 20px; color: var(--accent-color); }
     .error {
-      background: var(--error-bg);
-      border: 2px solid var(--error-border);
-      color: var(--error-text);
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 16px;
+      background: var(--error-bg); border: 2px solid var(--error-border);
+      color: var(--error-text); padding: 12px; border-radius: 8px; margin-bottom: 16px;
     }
-
     .company-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid var(--border-color);
     }
-
-    .company-name {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--accent-color);
+    .company-name { font-size: 20px; font-weight: 700; color: var(--accent-color); }
+    .company-type-badge { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .company-rating { background: #fbbf24; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+    .stat-label { color: var(--text-secondary); font-size: 14px; }
+    .stat-value { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .section-header h2 { margin-bottom: 0; }
+    .collapse-btn {
+      background: none; border: none; width: auto; padding: 4px 8px; font-size: 18px;
+      color: var(--text-secondary); cursor: pointer; border-radius: 4px; transition: background 0.2s;
     }
-
-    .company-rating {
-      background: #fbbf24;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .stat-label {
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .stat-value {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text-primary);
-    }
-
+    .collapse-btn:hover { background: var(--border-color); opacity: 1; }
+    .collapsible-body { overflow: hidden; transition: max-height 0.35s ease; }
+    .collapsible-body.collapsed { max-height: 0 !important; }
     .employee-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      border-left: 4px solid var(--accent-color);
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;
+      padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--accent-color);
+      cursor: pointer; transition: all 0.2s;
     }
-
-    .employee-card:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .employee-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .employee-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .employee-name { font-weight: 700; font-size: 16px; color: var(--text-primary); }
+    .employee-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+    .employee-position { font-size: 12px; color: var(--text-secondary); }
+    .level-badge {
+      font-size: 11px; font-weight: 600; background: rgba(102,126,234,0.15);
+      color: var(--accent-color); padding: 1px 6px; border-radius: 10px;
     }
-
-    .employee-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .employee-name {
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--text-primary);
-    }
-
-    .employee-position {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    .effectiveness {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
+    .effectiveness { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 14px; }
     .effectiveness.high { background: #dcfce7; color: #15803d; }
     .effectiveness.medium { background: #fef3c7; color: #92400e; }
     .effectiveness.low { background: #fee2e2; color: #991b1b; }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .stat-box {
-      text-align: center;
-      padding: 8px;
-      background: var(--border-color);
-      border-radius: 6px;
-    }
-
-    .stat-box-label {
-      font-size: 11px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .stat-box-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .stat-box { text-align: center; padding: 8px; background: var(--border-color); border-radius: 6px; }
+    .stat-box-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
+    .stat-box-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-top: 8px; }
     .status-badge.online { background: #dcfce7; color: #15803d; }
     .status-badge.offline { background: #f1f5f9; color: #64748b; }
     .status-badge.idle { background: #fef3c7; color: #92400e; }
     .status-badge.hospital { background: #fee2e2; color: #991b1b; }
-
-    .employee-details {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-
-    .employee-details.expanded {
-      max-height: 500px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .eff-breakdown {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .eff-item {
-      background: var(--border-color);
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    .eff-label {
-      color: var(--text-secondary);
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-
-    .eff-value {
-      font-weight: 700;
-      font-size: 14px;
-      margin-top: 2px;
-      color: var(--text-primary);
-    }
-
+    .employee-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .employee-details.expanded { max-height: 500px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    .eff-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .eff-item { background: var(--border-color); padding: 8px; border-radius: 4px; font-size: 12px; }
+    .eff-label { color: var(--text-secondary); font-size: 10px; text-transform: uppercase; }
+    .eff-value { font-weight: 700; font-size: 14px; margin-top: 2px; color: var(--text-primary); }
     .eff-value.positive { color: #15803d; }
     .eff-value.negative { color: #991b1b; }
-
     .hidden { display: none; }
-
-    .sync-info {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 12px;
-      margin-top: 8px;
-    }
-
-    .footer {
-      text-align: center;
-      color: rgba(255,255,255,0.7);
-      font-size: 12px;
-      margin-top: 40px;
-      padding: 20px;
-    }
-
-    .footer a {
-      color: rgba(255,255,255,0.9);
-      text-decoration: none;
-      margin: 0 8px;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 2000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-
-    .close-modal {
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--text-secondary);
-    }
-
-    .close-modal:hover {
-      color: var(--text-primary);
-    }
+    .suggestion-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+    .suggestion-role { font-weight: 700; font-size: 14px; color: var(--accent-color); margin-bottom: 6px; }
+    .suggestion-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+    .suggestion-row:last-child { border-bottom: none; }
+    .suggestion-name { color: var(--text-primary); font-weight: 500; }
+    .suggestion-score { font-weight: 700; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    .suggestion-score.great { background: #dcfce7; color: #15803d; }
+    .suggestion-score.good { background: #fef3c7; color: #92400e; }
+    .suggestion-score.weak { background: #fee2e2; color: #991b1b; }
+    .no-data-note { text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px 0; }
+    .footer { text-align: center; color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 40px; padding: 20px; }
+    .footer a { color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 8px; }
+    .footer a:hover { text-decoration: underline; }
+    .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: var(--card-bg); margin: 15% auto; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+    .close-modal { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: var(--text-secondary); }
+    .close-modal:hover { color: var(--text-primary); }
   </style>
 </head>
 <body>
@@ -461,38 +170,20 @@
       <div class="dropdown">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <div class="dropdown-content" id="menuDropdown">
-          <div class="dropdown-item" onclick="refreshData()" id="refreshBtn">
-            🔄 Refresh Data
-          </div>
-          <div class="dropdown-item" onclick="toggleDarkMode()">
-            <span id="darkModeIcon">🌙</span> Dark Mode
-          </div>
-          <div class="dropdown-item" onclick="showApiTerms()">
-            📄 API Terms
-          </div>
-          <div class="dropdown-item" onclick="showSettings()" id="settingsBtn" class="hidden">
-            ⚙️ Settings
-          </div>
+          <div class="dropdown-item" onclick="refreshData()" id="refreshBtn">🔄 Refresh Data</div>
+          <div class="dropdown-item" onclick="toggleDarkMode()"><span id="darkModeIcon">🌙</span> Dark Mode</div>
+          <div class="dropdown-item" onclick="showApiTerms()">📄 API Terms</div>
+          <div class="dropdown-item hidden" onclick="showSettings()" id="settingsBtn">⚙️ Settings</div>
         </div>
       </div>
     </div>
-    
+
     <div class="card" id="loginCard">
       <h2>Connect Your Company</h2>
       <div class="input-group">
-        <label for="apiKey">
-          Torn API Key 
-          <span class="info-icon" onclick="showApiInfo()">?</span>
-        </label>
-        <input 
-          type="text" 
-          id="apiKey" 
-          placeholder="Enter your 16-character API key"
-          autocomplete="off"
-        >
-        <div class="disclaimer">
-          ⚠️ <strong>Demo Version:</strong> No data is saved. When you close this page, all data is lost. For historical tracking and charts, the full platform is coming soon.
-        </div>
+        <label for="apiKey">Torn API Key <span class="info-icon" onclick="showApiInfo()">?</span></label>
+        <input type="text" id="apiKey" placeholder="Enter your 16-character API key" autocomplete="off">
+        <div class="disclaimer">⚠️ <strong>Demo Version:</strong> No data is saved. When you close this page, all data is lost. For historical tracking and charts, the full platform is coming soon.</div>
       </div>
       <button id="loadBtn" onclick="loadCompanyData()">Load Company Data</button>
     </div>
@@ -504,43 +195,30 @@
           <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;" id="companyNameDisplay"></div>
         </div>
       </div>
-      <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
-        <span id="syncInfo2"></span>
-      </div>
+      <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"><span id="syncInfo2"></span></div>
     </div>
 
     <div id="errorContainer"></div>
     <div id="loadingContainer" class="hidden">
-      <div class="card">
-        <div class="loading">⏳ Loading company data...</div>
-      </div>
+      <div class="card"><div class="loading">⏳ Loading company data...</div></div>
     </div>
     <div id="dataContainer"></div>
 
     <div class="footer">
       <div>Created and managed by <strong>Shmomelette [4104345]</strong></div>
-      <div style="margin-top: 8px;">
-        <a href="https://ko-fi.com/shmomelette" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
-      </div>
+      <div style="margin-top: 8px;"><a href="https://ko-fi.com/shmomelette" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a></div>
     </div>
   </div>
 
-  <!-- API Info Modal -->
   <div id="apiModal" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="closeModal('apiModal')">&times;</span>
       <h2>API Access Level</h2>
-      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">
-        <strong>Limited Access</strong> is recommended for this tool. It allows us to read your company data without accessing sensitive account information.
-      </p>
-      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">
-        Generate an API key in:<br>
-        <strong>Torn → Settings → API</strong>
-      </p>
+      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;"><strong>Limited Access</strong> is recommended for this tool. It allows us to read your company data without accessing sensitive account information.</p>
+      <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">Generate an API key in:<br><strong>Torn → Settings → API</strong></p>
     </div>
   </div>
 
-  <!-- API Terms Modal -->
   <div id="termsModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
       <span class="close-modal" onclick="closeModal('termsModal')">&times;</span>
@@ -551,19 +229,411 @@
         <p><strong>Purpose:</strong> Display current employee stats</p>
         <p><strong>Key Storage:</strong> Not stored (enter each session)</p>
         <p><strong>Access Level:</strong> Limited Access recommended</p>
-        <p style="margin-top: 16px; font-size: 12px;">
-          This demo version does not save any data. Your API key is used only during your current session to fetch data from Torn's API. When you close this page, nothing is retained.
-        </p>
+        <p style="margin-top: 16px; font-size: 12px;">This demo version does not save any data. Your API key is used only during your current session to fetch data from Torn's API. When you close this page, nothing is retained.</p>
       </div>
     </div>
   </div>
 
   <script>
-    let companyData = null;
-    let userData = null;
-    let currentApiKey = null;
+    let companyData = null, userData = null, currentApiKey = null;
 
-    // Dark mode
+    // ─── COMPANY ROLE DATA (sourced from Torn wiki screenshots) ─────────────
+    // Format: primary stat weight 2, secondary stat weight 1, unused stat 0
+    // Weights derived directly from the "Recommended Stats" column (primary / secondary)
+    const COMPANY_ROLES = {
+      "Adult Novelties": {
+        "Human Resources":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Sexpert":           { manual: 0, intelligence: 2, endurance: 1 },
+        "Store Manager":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketing Manager": { manual: 0, intelligence: 2, endurance: 1 },
+        "Receptionist":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Sales Assistant":   { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":           { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Amusement Park": {
+        "Inspector":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Manager":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Security Guard":  { manual: 2, intelligence: 0, endurance: 1 },
+        "Mechanic":        { manual: 2, intelligence: 1, endurance: 0 },
+        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Ride Attendant":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Entertainer":     { manual: 2, intelligence: 0, endurance: 1 },
+        "Ticket Agent":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Janitor":         { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Candle Shop": {
+        "Chandler":        { manual: 2, intelligence: 1, endurance: 0 },
+        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Quality Control": { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Salesperson":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Car Dealership": {
+        "Training Adviser": { manual: 0, intelligence: 2, endurance: 1 },
+        "Manager":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Webmaster":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Receptionist":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Mechanic":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Sales Executive":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
+        "Sales Apprentice": { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Clothing Store": {
+        "Line Manager":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Store Manager":   { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketing Manager": { manual: 0, intelligence: 2, endurance: 1 },
+        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Security Guard":  { manual: 2, intelligence: 0, endurance: 1 },
+        "Salesperson":     { manual: 0, intelligence: 2, endurance: 1 },
+        "Cashier":         { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Sales Trainee":   { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Cruise Line": {
+        "Captain":        { manual: 0, intelligence: 2, endurance: 1 },
+        "First Officer":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Doctor":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Specialist":     { manual: 0, intelligence: 2, endurance: 1 },
+        "Bosun":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Chef":           { manual: 0, intelligence: 2, endurance: 1 },
+        "Engineer":       { manual: 2, intelligence: 1, endurance: 0 },
+        "Receptionist":   { manual: 0, intelligence: 1, endurance: 2 },
+        "Steward":        { manual: 0, intelligence: 1, endurance: 2 },
+        "Bartender":      { manual: 1, intelligence: 0, endurance: 2 },
+        "Deckhand":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Ticket Agent":   { manual: 0, intelligence: 1, endurance: 2 }
+      },
+      "Cyber Cafe": {
+        "Cashier":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Receptionist":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":      { manual: 0, intelligence: 2, endurance: 1 },
+        "Teacher":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Administrator": { manual: 0, intelligence: 2, endurance: 1 },
+        "Technician":    { manual: 1, intelligence: 2, endurance: 0 }
+      },
+      "Detective Agency": {
+        "Private Investigator":  { manual: 1, intelligence: 2, endurance: 0 },
+        "Trainee Investigator":  { manual: 1, intelligence: 2, endurance: 0 },
+        "Secretary":             { manual: 1, intelligence: 0, endurance: 2 },
+        "Intelligence Analyst":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Surveillance":          { manual: 1, intelligence: 2, endurance: 0 },
+        "Chief Investigator":    { manual: 1, intelligence: 2, endurance: 0 },
+        "Client Liaison":        { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Farm": {
+        "Harvester":      { manual: 2, intelligence: 0, endurance: 1 },
+        "Delivery Driver":{ manual: 2, intelligence: 0, endurance: 1 },
+        "Herdsperson":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Farm Manager":   { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Consultant":     { manual: 0, intelligence: 2, endurance: 1 },
+        "Retailer":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Dairy Farmer":   { manual: 2, intelligence: 0, endurance: 1 },
+        "Poultry Farmer": { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Flower Shop": {
+        "Florist":    { manual: 1, intelligence: 0, endurance: 2 },
+        "Arranger":   { manual: 1, intelligence: 2, endurance: 0 },
+        "Apprentice": { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Accountant": { manual: 0, intelligence: 1, endurance: 2 }
+      },
+      "Firework Stand": {
+        "Salesperson":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Pyrotechnician":      { manual: 2, intelligence: 1, endurance: 0 },
+        "Picker Packer":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":             { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Advertising Manager": { manual: 0, intelligence: 2, endurance: 1 },
+        "Trainer":             { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Fitness Center": {
+        "Personal Trainer":     { manual: 2, intelligence: 0, endurance: 1 },
+        "Swimming Instructor":  { manual: 1, intelligence: 0, endurance: 2 },
+        "Lifeguard":            { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":              { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":              { manual: 0, intelligence: 1, endurance: 2 },
+        "Receptionist":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":             { manual: 0, intelligence: 2, endurance: 1 },
+        "Human Resources":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Nutritionist":         { manual: 1, intelligence: 2, endurance: 0 },
+        "Fitness Instructor":   { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Furniture Store": {
+        "Sales Clerk":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Delivery Driver":  { manual: 2, intelligence: 0, endurance: 1 },
+        "Apprentice":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Receptionist":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Trainer":          { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Game Shop": {
+        "Clerk":          { manual: 1, intelligence: 0, endurance: 2 },
+        "Game Advisor":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Cleaner":        { manual: 2, intelligence: 0, endurance: 1 },
+        "Store Manager":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Accountant":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":       { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Gas Station": {
+        "Attendant": { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":   { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":   { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Trainer":   { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Gents Strip Club": {
+        "Stripper":    { manual: 1, intelligence: 0, endurance: 2 },
+        "Security":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Cleaner":     { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Photographer":{ manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Grocery Store": {
+        "Cashier":         { manual: 1, intelligence: 0, endurance: 2 },
+        "Stock Clerk":     { manual: 2, intelligence: 0, endurance: 1 },
+        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Delivery Driver": { manual: 2, intelligence: 0, endurance: 1 },
+        "Cart Attendant":  { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Gun Shop": {
+        "Clerk":       { manual: 1, intelligence: 0, endurance: 2 },
+        "Gunsmith":    { manual: 2, intelligence: 1, endurance: 0 },
+        "Cleaner":     { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Instructor":  { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Hair Salon": {
+        "Stylist":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Colorist":        { manual: 2, intelligence: 0, endurance: 1 },
+        "Nail Technician": { manual: 1, intelligence: 0, endurance: 2 },
+        "Apprentice":      { manual: 2, intelligence: 0, endurance: 1 },
+        "Shampooist":      { manual: 2, intelligence: 0, endurance: 1 },
+        "Senior Stylist":  { manual: 2, intelligence: 0, endurance: 1 },
+        "Receptionist":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Aesthetician":    { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Ladies Strip Club": {
+        "Male Stripper": { manual: 1, intelligence: 0, endurance: 2 },
+        "Security":      { manual: 2, intelligence: 0, endurance: 1 },
+        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Photographer":  { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Law Firm": {
+        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Marketer":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Consultant": { manual: 0, intelligence: 2, endurance: 1 },
+        "Secretary":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Assistant":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Attorney":   { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Lingerie Store": {
+        "Salesperson":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":        { manual: 2, intelligence: 0, endurance: 1 },
+        "Store Manager":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Lingerie Model": { manual: 0, intelligence: 2, endurance: 1 },
+        "Human Resources":{ manual: 0, intelligence: 2, endurance: 1 },
+        "Trainee":        { manual: 0, intelligence: 1, endurance: 2 }
+      },
+      "Logistics Management": {
+        "Lumper":                { manual: 2, intelligence: 0, endurance: 1 },
+        "Driver":                { manual: 1, intelligence: 0, endurance: 2 },
+        "Forklift Operator":     { manual: 1, intelligence: 0, endurance: 2 },
+        "Transport Coordinator": { manual: 0, intelligence: 2, endurance: 1 },
+        "Warehouse Manager":     { manual: 0, intelligence: 2, endurance: 1 },
+        "Shift Manager":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Supply Chain Manager":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Procurement Manager":   { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Meat Warehouse": {
+        "Quality Controller":  { manual: 1, intelligence: 2, endurance: 0 },
+        "Packer":              { manual: 2, intelligence: 0, endurance: 1 },
+        "Apprentice Butcher":  { manual: 2, intelligence: 0, endurance: 1 },
+        "Cleaner":             { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":             { manual: 0, intelligence: 1, endurance: 2 },
+        "Assistant":           { manual: 0, intelligence: 1, endurance: 2 },
+        "Supervisor":          { manual: 0, intelligence: 2, endurance: 1 },
+        "Butcher":             { manual: 2, intelligence: 0, endurance: 1 },
+        "Retailer":            { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Mechanic Shop": {
+        "Technician":           { manual: 2, intelligence: 0, endurance: 1 },
+        "Apprentice Technician":{ manual: 2, intelligence: 0, endurance: 1 },
+        "Cleaner":              { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":              { manual: 0, intelligence: 1, endurance: 2 },
+        "Receptionist":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Trainer":              { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Mining Corporation": {
+        "Sales Executive":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Mill Operator":      { manual: 2, intelligence: 0, endurance: 1 },
+        "Production Foreman": { manual: 1, intelligence: 0, endurance: 2 },
+        "Mine Engineer":      { manual: 0, intelligence: 2, endurance: 1 },
+        "Electrician":        { manual: 1, intelligence: 0, endurance: 2 },
+        "Safety Inspector":   { manual: 1, intelligence: 2, endurance: 0 },
+        "Site Manager":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Secretary":          { manual: 0, intelligence: 1, endurance: 2 }
+      },
+      "Music Store": {
+        "Sales Assistant":  { manual: 0, intelligence: 1, endurance: 2 },
+        "Musician":         { manual: 1, intelligence: 2, endurance: 0 },
+        "Sales Apprentice": { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
+        "Supervisor":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Trainer":          { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Nightclub": {
+        "Bartender":         { manual: 1, intelligence: 0, endurance: 2 },
+        "Bouncer":           { manual: 2, intelligence: 0, endurance: 1 },
+        "Barback":           { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":           { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":           { manual: 0, intelligence: 1, endurance: 2 },
+        "Personal Assistant":{ manual: 0, intelligence: 1, endurance: 2 },
+        "Promoter":          { manual: 0, intelligence: 2, endurance: 1 },
+        "Trainer":           { manual: 0, intelligence: 2, endurance: 1 },
+        "Disk-jockey":       { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Oil Rig": {
+        "Driller":         { manual: 2, intelligence: 1, endurance: 0 },
+        "Roughneck":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Derrick Hand":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Secretary":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Inspector":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Sales Executive": { manual: 0, intelligence: 2, endurance: 1 },
+        "Motor Hand":      { manual: 2, intelligence: 1, endurance: 0 }
+      },
+      "Private Security Firm": {
+        "Security Contractor": { manual: 2, intelligence: 0, endurance: 1 },
+        "Team Leader":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Defence Consultant":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Spokesperson":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Company Liaison":     { manual: 0, intelligence: 1, endurance: 2 },
+        "Chief Strategist":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Reconnaissance":      { manual: 2, intelligence: 1, endurance: 0 },
+        "Disposal Engineer":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Armourer":            { manual: 1, intelligence: 0, endurance: 2 },
+        "Medic":               { manual: 0, intelligence: 2, endurance: 1 },
+        "Comms Engineer":      { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Property Broker": {
+        "Property Broker":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Valuation Specialist":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Associate Broker":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":               { manual: 2, intelligence: 0, endurance: 1 },
+        "Team Manager":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Receptionist":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Graphic Designer":      { manual: 0, intelligence: 2, endurance: 1 },
+        "Broker Support":        { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Pub": {
+        "Bartender":  { manual: 1, intelligence: 0, endurance: 2 },
+        "Bouncer":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Waiter":     { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper": { manual: 0, intelligence: 1, endurance: 2 },
+        "Trainer":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Promoter":   { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Restaurant": {
+        "Waiter":           { manual: 1, intelligence: 0, endurance: 2 },
+        "Sous Chef":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Head Chef":        { manual: 0, intelligence: 1, endurance: 2 },
+        "Kitchen Assistant":{ manual: 2, intelligence: 0, endurance: 1 },
+        "Head Waiter":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Line Cook":        { manual: 1, intelligence: 2, endurance: 0 },
+        "Chef":             { manual: 1, intelligence: 2, endurance: 0 },
+        "Apprentice Chef":  { manual: 1, intelligence: 2, endurance: 0 },
+        "Dishwasher":       { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Software Corporation": {
+        "Developer":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Tester":           { manual: 0, intelligence: 2, endurance: 1 },
+        "Graphic Designer": { manual: 0, intelligence: 2, endurance: 1 },
+        "Apprentice":       { manual: 0, intelligence: 2, endurance: 1 },
+        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
+        "Lead Developer":   { manual: 0, intelligence: 1, endurance: 2 },
+        "Analyst":          { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Consultant":       { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Sweet Shop": {
+        "Confectionist": { manual: 0, intelligence: 2, endurance: 1 },
+        "Packager":      { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":      { manual: 0, intelligence: 2, endurance: 1 },
+        "Clerk":         { manual: 1, intelligence: 0, endurance: 2 }
+      },
+      "Television Network": {
+        "Producer":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Programmer":      { manual: 0, intelligence: 2, endurance: 1 },
+        "Camera Operator": { manual: 1, intelligence: 2, endurance: 0 },
+        "Sales Executive": { manual: 0, intelligence: 1, endurance: 2 },
+        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
+        "Attorney":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Secretary":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
+        "Writer":          { manual: 0, intelligence: 2, endurance: 1 },
+        "Stagehand":       { manual: 2, intelligence: 0, endurance: 1 },
+        "Anchor":          { manual: 0, intelligence: 2, endurance: 1 },
+        "Reporter":        { manual: 0, intelligence: 2, endurance: 1 }
+      },
+      "Theater": {
+        "Ticketing Agent":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Technician":         { manual: 2, intelligence: 1, endurance: 0 },
+        "Programmer":         { manual: 0, intelligence: 2, endurance: 1 },
+        "Janitor":            { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":            { manual: 0, intelligence: 1, endurance: 2 },
+        "Accountant":         { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketing Manager":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Usher":              { manual: 1, intelligence: 0, endurance: 2 }
+      },
+      "Toy Shop": {
+        "Sales Assistant":    { manual: 1, intelligence: 0, endurance: 2 },
+        "Cleaner":            { manual: 2, intelligence: 0, endurance: 1 },
+        "Store Manager":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Office Clerk":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Marketing Executive":{ manual: 0, intelligence: 2, endurance: 1 },
+        "Training Advisor":   { manual: 0, intelligence: 2, endurance: 1 },
+        "Stock Clerk":        { manual: 2, intelligence: 0, endurance: 1 }
+      },
+      "Zoo": {
+        "Zoo Keeper":    { manual: 2, intelligence: 0, endurance: 1 },
+        "Animal Trainer":{ manual: 1, intelligence: 2, endurance: 0 },
+        "Aquarist":      { manual: 0, intelligence: 1, endurance: 2 },
+        "Intern":        { manual: 2, intelligence: 0, endurance: 1 },
+        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
+        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
+        "Photographer":  { manual: 0, intelligence: 2, endurance: 1 },
+        "Consultant":    { manual: 0, intelligence: 2, endurance: 1 },
+        "Veterinarian":  { manual: 1, intelligence: 2, endurance: 0 },
+        "Cashier":       { manual: 0, intelligence: 1, endurance: 2 }
+      }
+    };
+
+    // ─── Dark mode ────────────────────────────────────────────────────────────
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       const icon = document.getElementById('darkModeIcon');
@@ -571,61 +641,32 @@
       localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
       toggleMenu();
     }
-
-    // Load dark mode preference
     if (localStorage.getItem('darkMode') === 'true') {
       document.body.classList.add('dark-mode');
       document.getElementById('darkModeIcon').textContent = '☀️';
     }
 
-    function toggleMenu() {
-      document.getElementById('menuDropdown').classList.toggle('show');
-    }
-
-    // Close dropdown when clicking outside
+    function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
     window.onclick = function(event) {
       if (!event.target.matches('.menu-btn')) {
-        const dropdown = document.getElementById('menuDropdown');
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-        }
+        const dd = document.getElementById('menuDropdown');
+        if (dd.classList.contains('show')) dd.classList.remove('show');
       }
     }
+    function showApiInfo() { document.getElementById('apiModal').style.display = 'block'; }
+    function showApiTerms() { document.getElementById('termsModal').style.display = 'block'; toggleMenu(); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function showApiInfo() {
-      document.getElementById('apiModal').style.display = 'block';
-    }
-
-    function showApiTerms() {
-      document.getElementById('termsModal').style.display = 'block';
-      toggleMenu();
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
-
+    // ─── Load / Refresh ───────────────────────────────────────────────────────
     async function loadCompanyData() {
       const apiKey = document.getElementById('apiKey').value.trim();
-      
-      if (!apiKey) {
-        showError('Please enter your API key');
-        return;
-      }
-
-      if (apiKey.length !== 16) {
-        showError('API key should be 16 characters long');
-        return;
-      }
-
+      if (!apiKey) { showError('Please enter your API key'); return; }
+      if (apiKey.length !== 16) { showError('API key should be 16 characters long'); return; }
       await fetchCompanyData(apiKey);
     }
 
     async function refreshData() {
-      if (!currentApiKey) {
-        showError('No API key stored. Please reconnect.');
-        return;
-      }
+      if (!currentApiKey) { showError('No API key stored. Please reconnect.'); return; }
       toggleMenu();
       await fetchCompanyData(currentApiKey);
     }
@@ -633,7 +674,6 @@
     async function fetchCompanyData(apiKey) {
       document.getElementById('errorContainer').innerHTML = '';
       document.getElementById('dataContainer').innerHTML = '';
-      
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadBtn').disabled = true;
 
@@ -642,71 +682,66 @@
           `https://api.torn.com/user/?selections=basic&key=${apiKey}`,
           { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
         );
-
         if (!userResponse.ok) throw new Error(`HTTP error! status: ${userResponse.status}`);
-
         const userDataRaw = await userResponse.json();
-
-        if (userDataRaw.error) {
-          const errorMsg = userDataRaw.error.error || 'Unknown API error';
-          const errorCode = userDataRaw.error.code || '';
-          throw new Error(`${errorMsg} (Code: ${errorCode})`);
-        }
+        if (userDataRaw.error) throw new Error(formatApiError(userDataRaw.error));
 
         userData = userDataRaw;
         currentApiKey = apiKey;
 
-        const companyUrl = `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`;
-        
-        const response = await fetch(companyUrl, {
-          method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' }
-        });
-
+        const response = await fetch(
+          `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`,
+          { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
+        );
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
         const data = await response.json();
-
-        if (data.error) {
-          const errorMsg = data.error.error || 'Unknown API error';
-          const errorCode = data.error.code || '';
-          throw new Error(`${errorMsg} (Code: ${errorCode})`);
-        }
+        if (data.error) throw new Error(formatApiError(data.error));
 
         const companyInfo = data.company || data.company_detailed;
         if (companyInfo.director !== userData.player_id) {
-          throw new Error('⛔ You must be a company director to use this platform. Only directors can track employee stats.');
+          throw new Error(
+            '⛔ Director access required — this tool is for company directors only. ' +
+            'If you are a director, make sure you are using the API key linked to your director account.'
+          );
         }
 
         companyData = data;
-        
         document.getElementById('loginCard').classList.add('hidden');
         document.getElementById('welcomeCard').classList.remove('hidden');
         document.getElementById('refreshBtn').classList.remove('hidden');
         document.getElementById('settingsBtn').classList.remove('hidden');
-        
         document.getElementById('userName').textContent = userData.name;
         const companyName = (data.company && data.company.name) || 'Your Company';
         document.getElementById('companyNameDisplay').textContent = companyName;
-        
         displayCompanyData(data);
-        
         const now = new Date();
-        document.getElementById('syncInfo2').textContent = 
-          `✓ Last synced at ${now.toLocaleTimeString()}`;
+        document.getElementById('syncInfo2').textContent = `✓ Last synced at ${now.toLocaleTimeString()}`;
 
       } catch (error) {
         console.error('Full error:', error);
-        let errorMessage = error.message;
-        
-        if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
-          errorMessage = 'Network error - please check your connection';
-        }
-        
-        showError(errorMessage);
+        let msg = error.message;
+        if (msg === 'Failed to fetch' || msg.includes('NetworkError'))
+          msg = 'Network error — please check your connection and try again.';
+        showError(msg);
       } finally {
         document.getElementById('loadingContainer').classList.add('hidden');
         document.getElementById('loadBtn').disabled = false;
       }
+    }
+
+    function formatApiError(err) {
+      const code = err.code || '';
+      const raw  = err.error || 'Unknown API error';
+      const messages = {
+        0:  'Unknown error — please try again.',
+        1:  'API key not provided. Please enter your key.',
+        2:  'API key is incorrect — double-check you copied it correctly.',
+        7:  "Your API key doesn't have permission to access company data. Make sure you selected \"Limited Access\" or higher when creating the key in Torn → Settings → API.",
+        9:  'This key doesn\'t have enough permissions. Try creating a new key with "Limited Access".',
+        13: 'Too many requests — please wait a moment and try again.',
+        17: 'Access denied. This can happen if the key is set to "Public Only" — try a Limited Access key instead.',
+      };
+      return messages[code] ? `⚠️ ${messages[code]} (Code ${code})` : `⚠️ ${raw} (Code: ${code})`;
     }
 
     function showSettings() {
@@ -718,154 +753,172 @@
         document.getElementById('apiKey').value = '';
         document.getElementById('refreshBtn').classList.add('hidden');
         document.getElementById('settingsBtn').classList.add('hidden');
-        companyData = null;
-        userData = null;
-        currentApiKey = null;
+        companyData = null; userData = null; currentApiKey = null;
       }
       toggleMenu();
     }
 
     function showError(message) {
-      document.getElementById('errorContainer').innerHTML = `
-        <div class="card error">${message}</div>
-      `;
+      document.getElementById('errorContainer').innerHTML = `<div class="card error">${message}</div>`;
     }
 
-    function toggleEmployeeDetails(employeeId) {
-      const details = document.getElementById(`details-${employeeId}`);
-      details.classList.toggle('expanded');
+    function toggleEmployeeDetails(id) {
+      document.getElementById(`details-${id}`).classList.toggle('expanded');
     }
 
+    function toggleSection(bodyId, btnId) {
+      const body = document.getElementById(bodyId);
+      const btn  = document.getElementById(btnId);
+      const isCollapsed = body.classList.contains('collapsed');
+      if (isCollapsed) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.classList.remove('collapsed');
+        btn.textContent = '▲';
+      } else {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        requestAnimationFrame(() => { body.classList.add('collapsed'); });
+        btn.textContent = '▼';
+      }
+    }
+
+    // ─── Suggestions engine ───────────────────────────────────────────────────
+    function scoreFit(employee, weights) {
+      const total = weights.manual + weights.intelligence + weights.endurance;
+      if (total === 0) return 0;
+      return Math.round(
+        (employee.manual_labor   * weights.manual       +
+         employee.intelligence   * weights.intelligence  +
+         employee.endurance      * weights.endurance) / total
+      );
+    }
+
+    function buildSuggestions(companyType, employees) {
+      const roles = COMPANY_ROLES[companyType];
+      if (!roles) return null;
+      const empList = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
+      return Object.entries(roles).map(([role, weights]) => ({
+        role,
+        scored: empList
+          .map(e => ({ name: e.name, id: e.id, score: scoreFit(e, weights), current: e.position }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3)
+      }));
+    }
+
+    // ─── Main display ─────────────────────────────────────────────────────────
     function displayCompanyData(data) {
-      const container = document.getElementById('dataContainer');
-      
-      const detailed = data.company_detailed;
-      const employees = data.company_employees;
+      const container    = document.getElementById('dataContainer');
+      const detailed     = data.company_detailed;
+      const employees    = data.company_employees;
+      const profile      = data.company;
       const employeeCount = Object.keys(employees).length;
-      const companyName = (data.company && data.company.name) || 'Your Company';
+      const companyName  = (profile && profile.name) || 'Your Company';
+      const companyType  = (profile && profile.company_type_name) || (detailed && detailed.company_type) || '';
+      const lastCustomers = (profile && profile.daily_customers != null) ? profile.daily_customers : null;
+      const lastIncome    = (profile && profile.weekly_income   != null) ? profile.weekly_income   : null;
 
       let html = `
         <div class="card">
           <div class="company-header">
-            <div class="company-name">${companyName}</div>
+            <div>
+              <div class="company-name">${companyName}</div>
+              ${companyType ? `<div class="company-type-badge">🏷️ ${companyType}</div>` : ''}
+            </div>
             <div class="company-rating">$${detailed.company_funds.toLocaleString()}</div>
           </div>
-          
-          <div class="stat-row">
-            <span class="stat-label">Efficiency</span>
-            <span class="stat-value">${detailed.efficiency}%</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Environment</span>
-            <span class="stat-value">${detailed.environment}%</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Employees</span>
-            <span class="stat-value">${employeeCount} / ${detailed.upgrades.company_size}</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Company Funds</span>
-            <span class="stat-value">$${detailed.company_funds.toLocaleString()}</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Company Value</span>
-            <span class="stat-value">$${detailed.value.toLocaleString()}</span>
-          </div>
+          <div class="stat-row"><span class="stat-label">Efficiency</span><span class="stat-value">${detailed.efficiency}%</span></div>
+          <div class="stat-row"><span class="stat-label">Environment</span><span class="stat-value">${detailed.environment}%</span></div>
+          <div class="stat-row"><span class="stat-label">Employees</span><span class="stat-value">${employeeCount} / ${detailed.upgrades.company_size}</span></div>
+          <div class="stat-row"><span class="stat-label">Company Funds</span><span class="stat-value">$${detailed.company_funds.toLocaleString()}</span></div>
+          <div class="stat-row"><span class="stat-label">Company Value</span><span class="stat-value">$${detailed.value.toLocaleString()}</span></div>
+          ${lastCustomers !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Customers</span><span class="stat-value">${lastCustomers.toLocaleString()}</span></div>` : ''}
+          ${lastIncome    !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Income</span><span class="stat-value">$${lastIncome.toLocaleString()}</span></div>` : ''}
         </div>
 
         <div class="card">
-          <h2>📊 Employees (${employeeCount})</h2>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-            💡 Tap any employee to see effectiveness breakdown
+          <div class="section-header" onclick="toggleSection('employeesBody','employeesToggle')">
+            <h2>📊 Employees (${employeeCount})</h2>
+            <button class="collapse-btn" id="employeesToggle">▲</button>
           </div>
+          <div class="collapsible-body" id="employeesBody" style="max-height: 9999px;">
+            <div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0 4px;">💡 Tap any employee to see effectiveness breakdown</div>
       `;
 
-      const sortedEmployees = Object.entries(employees).sort((a, b) => {
-        return (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0);
-      });
+      Object.entries(employees)
+        .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
+        .forEach(([id, emp]) => {
+          const eff       = emp.effectiveness?.total || 0;
+          const effClass  = eff >= 70 ? 'high' : eff >= 40 ? 'medium' : 'low';
+          const totalStats = emp.manual_labor + emp.intelligence + emp.endurance;
+          const statusClass = emp.last_action.status.toLowerCase();
+          const eb          = emp.effectiveness || {};
+          const level        = emp.level ? `Lv ${emp.level}` : '';
 
-      sortedEmployees.forEach(([id, employee]) => {
-        const eff = employee.effectiveness?.total || 0;
-        const effClass = eff >= 70 ? 'high' : eff >= 40 ? 'medium' : 'low';
-        
-        const totalStats = employee.manual_labor + employee.intelligence + employee.endurance;
-        
-        const statusClass = employee.last_action.status.toLowerCase();
-        const statusText = employee.last_action.status;
-
-        const effBreakdown = employee.effectiveness || {};
-
-        html += `
-          <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
-            <div class="employee-header">
-              <div>
-                <div class="employee-name">${employee.name} [${id}]</div>
-                <div class="employee-position">${employee.position}</div>
-              </div>
-              <div class="effectiveness ${effClass}">${eff}%</div>
-            </div>
-
-            <div class="stats-grid">
-              <div class="stat-box">
-                <div class="stat-box-label">Manual</div>
-                <div class="stat-box-value">${employee.manual_labor.toLocaleString()}</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-box-label">Intel</div>
-                <div class="stat-box-value">${employee.intelligence.toLocaleString()}</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-box-label">Endurance</div>
-                <div class="stat-box-value">${employee.endurance.toLocaleString()}</div>
-              </div>
-            </div>
-
-            <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-              Total Stats: ${totalStats.toLocaleString()} • 
-              Wage: $${employee.wage.toLocaleString()}/day •
-              Days: ${employee.days_in_company}
-            </div>
-
-            <span class="status-badge ${statusClass}">${statusText} • ${employee.last_action.relative}</span>
-
-            <div class="employee-details" id="details-${id}">
-              <h3 style="font-size: 14px; color: var(--accent-color); margin-bottom: 8px;">Effectiveness Breakdown</h3>
-              <div class="eff-breakdown">
-                <div class="eff-item">
-                  <div class="eff-label">Working Stats</div>
-                  <div class="eff-value positive">+${effBreakdown.working_stats || 0}%</div>
+          html += `
+            <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
+              <div class="employee-header">
+                <div>
+                  <div class="employee-name">${emp.name} [${id}]</div>
+                  <div class="employee-meta">
+                    <span class="employee-position">${emp.position}</span>
+                    ${level ? `<span class="level-badge">${level}</span>` : ''}
+                  </div>
                 </div>
-                <div class="eff-item">
-                  <div class="eff-label">Settled In</div>
-                  <div class="eff-value positive">+${effBreakdown.settled_in || 0}%</div>
-                </div>
-                <div class="eff-item">
-                  <div class="eff-label">Merits</div>
-                  <div class="eff-value positive">+${effBreakdown.merits || 0}%</div>
-                </div>
-                <div class="eff-item">
-                  <div class="eff-label">Management</div>
-                  <div class="eff-value positive">+${effBreakdown.management || 0}%</div>
-                </div>
-                <div class="eff-item">
-                  <div class="eff-label">Addiction</div>
-                  <div class="eff-value ${effBreakdown.addiction < 0 ? 'negative' : 'positive'}">${effBreakdown.addiction || 0}%</div>
-                </div>
-                <div class="eff-item">
-                  <div class="eff-label">Inactivity</div>
-                  <div class="eff-value ${effBreakdown.inactivity < 0 ? 'negative' : 'positive'}">${effBreakdown.inactivity || 0}%</div>
-                </div>
+                <div class="effectiveness ${effClass}">${eff}%</div>
               </div>
-              <div style="margin-top: 12px; padding: 8px; background: var(--border-color); border-radius: 4px; text-align: center;">
-                <strong>Total Effectiveness: ${eff}%</strong>
+              <div class="stats-grid">
+                <div class="stat-box"><div class="stat-box-label">Manual</div><div class="stat-box-value">${emp.manual_labor.toLocaleString()}</div></div>
+                <div class="stat-box"><div class="stat-box-label">Intel</div><div class="stat-box-value">${emp.intelligence.toLocaleString()}</div></div>
+                <div class="stat-box"><div class="stat-box-label">Endurance</div><div class="stat-box-value">${emp.endurance.toLocaleString()}</div></div>
               </div>
-            </div>
+              <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                Total Stats: ${totalStats.toLocaleString()} • Wage: $${emp.wage.toLocaleString()}/day • Days: ${emp.days_in_company}
+              </div>
+              <span class="status-badge ${statusClass}">${emp.last_action.status} • ${emp.last_action.relative}</span>
+              <div class="employee-details" id="details-${id}">
+                <h3 style="font-size: 14px; color: var(--accent-color); margin-bottom: 8px;">Effectiveness Breakdown</h3>
+                <div class="eff-breakdown">
+                  <div class="eff-item"><div class="eff-label">Working Stats</div><div class="eff-value positive">+${eb.working_stats || 0}%</div></div>
+                  <div class="eff-item"><div class="eff-label">Settled In</div><div class="eff-value positive">+${eb.settled_in || 0}%</div></div>
+                  <div class="eff-item"><div class="eff-label">Merits</div><div class="eff-value positive">+${eb.merits || 0}%</div></div>
+                  <div class="eff-item"><div class="eff-label">Management</div><div class="eff-value positive">+${eb.management || 0}%</div></div>
+                  <div class="eff-item"><div class="eff-label">Addiction</div><div class="eff-value ${eb.addiction < 0 ? 'negative' : 'positive'}">${eb.addiction || 0}%</div></div>
+                  <div class="eff-item"><div class="eff-label">Inactivity</div><div class="eff-value ${eb.inactivity < 0 ? 'negative' : 'positive'}">${eb.inactivity || 0}%</div></div>
+                </div>
+                <div style="margin-top: 12px; padding: 8px; background: var(--border-color); border-radius: 4px; text-align: center;"><strong>Total Effectiveness: ${eff}%</strong></div>
+              </div>
+            </div>`;
+        });
+
+      html += `</div></div>`;
+
+      // ── Suggestions ────────────────────────────────────────────────────────
+      const suggestions = buildSuggestions(companyType, employees);
+      html += `
+        <div class="card">
+          <div class="section-header" onclick="toggleSection('suggestionsBody','suggestionsToggle')">
+            <h2>💡 Role Suggestions</h2>
+            <button class="collapse-btn" id="suggestionsToggle">▲</button>
           </div>
-        `;
-      });
+          <div class="collapsible-body" id="suggestionsBody" style="max-height: 9999px;">`;
 
-      html += `</div>`;
-      
+      if (!suggestions) {
+        html += `<div class="no-data-note" style="margin-top: 12px;">No role data available for <strong>${companyType || 'this company type'}</strong>.</div>`;
+      } else {
+        html += `<div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0 8px;">Best-fit employees per role based on recommended stat weighting.</div>`;
+        suggestions.forEach(({ role, scored }) => {
+          html += `<div class="suggestion-card"><div class="suggestion-role">${role}</div>`;
+          scored.forEach((s, i) => {
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+            const cls   = i === 0 ? 'great' : i === 1 ? 'good' : 'weak';
+            const cur   = s.current === role ? ' ✓' : '';
+            html += `<div class="suggestion-row"><span class="suggestion-name">${medal} ${s.name}${cur}</span><span class="suggestion-score ${cls}">Score: ${s.score.toLocaleString()}</span></div>`;
+          });
+          html += `</div>`;
+        });
+      }
+      html += `</div></div>`;
+
       container.innerHTML = html;
     }
   </script>
