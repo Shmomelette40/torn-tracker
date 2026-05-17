@@ -266,399 +266,402 @@
   <script>
     let companyData = null, userData = null, currentApiKey = null;
 
-    // ─── COMPANY ROLE DATA (sourced from Torn wiki screenshots) ─────────────
-    // Format: primary stat weight 2, secondary stat weight 1, unused stat 0
-    // Weights derived directly from the "Recommended Stats" column (primary / secondary)
+    // ─── COMPANY ROLE DATA — real recommended stats from Torn wiki ───────────
+    // Each role: { man: primary, int: primary, end: primary, man2: secondary, int2: secondary, end2: secondary }
+    // Primary stat = first number in "X STAT / Y STAT2", secondary = second number.
+    // Scoring uses: how close is the employee to the recommended primary + secondary stats.
+    // Format: { man, int, end } where values are the recommended working stat targets.
+    // Unused stats are 0. Primary stat listed first in the game data.
     const COMPANY_ROLES = {
       "Adult Novelties": {
-        "Human Resources":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Sexpert":           { manual: 0, intelligence: 2, endurance: 1 },
-        "Store Manager":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketing Manager": { manual: 0, intelligence: 2, endurance: 1 },
-        "Receptionist":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Sales Assistant":   { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":           { manual: 2, intelligence: 0, endurance: 1 }
+        "Human Resources":   { man: 0,     int: 12000, end: 6000  },
+        "Sexpert":           { man: 0,     int: 10000, end: 5000  },
+        "Store Manager":     { man: 0,     int: 4000,  end: 8000  },
+        "Marketing Manager": { man: 0,     int: 8000,  end: 4000  },
+        "Receptionist":      { man: 0,     int: 3000,  end: 6000  },
+        "Sales Assistant":   { man: 2000,  int: 0,     end: 4000  },
+        "Cleaner":           { man: 2000,  int: 0,     end: 1000  }
       },
       "Amusement Park": {
-        "Inspector":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Manager":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Security Guard":  { manual: 2, intelligence: 0, endurance: 1 },
-        "Mechanic":        { manual: 2, intelligence: 1, endurance: 0 },
-        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Ride Attendant":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Entertainer":     { manual: 2, intelligence: 0, endurance: 1 },
-        "Ticket Agent":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Janitor":         { manual: 2, intelligence: 0, endurance: 1 }
+        "Inspector":       { man: 0,      int: 135000, end: 67500 },
+        "Manager":         { man: 0,      int: 45000,  end: 90000 },
+        "Marketer":        { man: 0,      int: 90000,  end: 45000 },
+        "Security Guard":  { man: 79000,  int: 0,      end: 39500 },
+        "Mechanic":        { man: 67500,  int: 33750,  end: 0     },
+        "Accountant":      { man: 0,      int: 33750,  end: 67500 },
+        "Ride Attendant":  { man: 0,      int: 22500,  end: 45000 },
+        "Entertainer":     { man: 34000,  int: 0,      end: 17000 },
+        "Ticket Agent":    { man: 0,      int: 11250,  end: 22500 },
+        "Janitor":         { man: 22500,  int: 0,      end: 11250 }
       },
       "Candle Shop": {
-        "Chandler":        { manual: 2, intelligence: 1, endurance: 0 },
-        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Quality Control": { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Salesperson":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 }
+        "Chandler":        { man: 4500,  int: 2250,  end: 0    },
+        "Trainer":         { man: 0,     int: 4500,  end: 2250 },
+        "Quality Control": { man: 0,     int: 1500,  end: 3000 },
+        "Bookkeeper":      { man: 0,     int: 1250,  end: 2500 },
+        "Salesperson":     { man: 0,     int: 750,   end: 1500 },
+        "Cleaner":         { man: 1000,  int: 0,     end: 500  }
       },
       "Car Dealership": {
-        "Training Adviser": { manual: 0, intelligence: 2, endurance: 1 },
-        "Manager":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Webmaster":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Receptionist":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Mechanic":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Sales Executive":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
-        "Sales Apprentice": { manual: 0, intelligence: 2, endurance: 1 }
+        "Training Adviser": { man: 0,     int: 63000, end: 31500 },
+        "Manager":          { man: 0,     int: 21000, end: 42000 },
+        "Webmaster":        { man: 0,     int: 42000, end: 21000 },
+        "Receptionist":     { man: 0,     int: 15750, end: 31500 },
+        "Mechanic":         { man: 26500, int: 0,     end: 13250 },
+        "Sales Executive":  { man: 0,     int: 21000, end: 10500 },
+        "Cleaner":          { man: 10500, int: 0,     end: 5250  },
+        "Sales Apprentice": { man: 0,     int: 5500,  end: 2750  }
       },
       "Clothing Store": {
-        "Line Manager":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Store Manager":   { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketing Manager": { manual: 0, intelligence: 2, endurance: 1 },
-        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Security Guard":  { manual: 2, intelligence: 0, endurance: 1 },
-        "Salesperson":     { manual: 0, intelligence: 2, endurance: 1 },
-        "Cashier":         { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Sales Trainee":   { manual: 0, intelligence: 2, endurance: 1 }
+        "Line Manager":      { man: 0,    int: 6000, end: 3000 },
+        "Store Manager":     { man: 0,    int: 2000, end: 4000 },
+        "Marketing Manager": { man: 0,    int: 4000, end: 2000 },
+        "Accountant":        { man: 0,    int: 1500, end: 3000 },
+        "Security Guard":    { man: 3000, int: 0,    end: 1500 },
+        "Salesperson":       { man: 0,    int: 2000, end: 1000 },
+        "Cashier":           { man: 750,  int: 0,    end: 1500 },
+        "Cleaner":           { man: 1000, int: 0,    end: 500  },
+        "Sales Trainee":     { man: 0,    int: 500,  end: 250  }
       },
       "Cruise Line": {
-        "Captain":        { manual: 0, intelligence: 2, endurance: 1 },
-        "First Officer":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Doctor":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Specialist":     { manual: 0, intelligence: 2, endurance: 1 },
-        "Bosun":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Chef":           { manual: 0, intelligence: 2, endurance: 1 },
-        "Engineer":       { manual: 2, intelligence: 1, endurance: 0 },
-        "Receptionist":   { manual: 0, intelligence: 1, endurance: 2 },
-        "Steward":        { manual: 0, intelligence: 1, endurance: 2 },
-        "Bartender":      { manual: 1, intelligence: 0, endurance: 2 },
-        "Deckhand":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Ticket Agent":   { manual: 0, intelligence: 1, endurance: 2 }
+        "Captain":       { man: 0,     int: 154500, end: 77250 },
+        "First Officer": { man: 0,     int: 105000, end: 52500 },
+        "Doctor":        { man: 0,     int: 103000, end: 51500 },
+        "Specialist":    { man: 0,     int: 90000,  end: 45000 },
+        "Bosun":         { man: 0,     int: 37000,  end: 74000 },
+        "Marketer":      { man: 0,     int: 72000,  end: 36000 },
+        "Chef":          { man: 0,     int: 64500,  end: 32250 },
+        "Engineer":      { man: 54500, int: 27250,  end: 0     },
+        "Receptionist":  { man: 0,     int: 21000,  end: 42000 },
+        "Steward":       { man: 0,     int: 20750,  end: 41500 },
+        "Bartender":     { man: 19250, int: 0,      end: 38500 },
+        "Deckhand":      { man: 26000, int: 0,      end: 13000 },
+        "Ticket Agent":  { man: 0,     int: 13000,  end: 26000 }
       },
       "Cyber Cafe": {
-        "Cashier":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Receptionist":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":      { manual: 0, intelligence: 2, endurance: 1 },
-        "Teacher":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Administrator": { manual: 0, intelligence: 2, endurance: 1 },
-        "Technician":    { manual: 1, intelligence: 2, endurance: 0 }
+        "Cashier":       { man: 0,     int: 5000,  end: 10000 },
+        "Cleaner":       { man: 5000,  int: 0,     end: 2500  },
+        "Manager":       { man: 0,     int: 10000, end: 20000 },
+        "Receptionist":  { man: 0,     int: 7500,  end: 15000 },
+        "Marketer":      { man: 0,     int: 20000, end: 10000 },
+        "Teacher":       { man: 0,     int: 30000, end: 15000 },
+        "Administrator": { man: 0,     int: 20000, end: 10000 },
+        "Technician":    { man: 8750,  int: 17500, end: 0     }
       },
       "Detective Agency": {
-        "Private Investigator":  { manual: 1, intelligence: 2, endurance: 0 },
-        "Trainee Investigator":  { manual: 1, intelligence: 2, endurance: 0 },
-        "Secretary":             { manual: 1, intelligence: 0, endurance: 2 },
-        "Intelligence Analyst":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Surveillance":          { manual: 1, intelligence: 2, endurance: 0 },
-        "Chief Investigator":    { manual: 1, intelligence: 2, endurance: 0 },
-        "Client Liaison":        { manual: 0, intelligence: 2, endurance: 1 }
+        "Private Investigator": { man: 22500, int: 45500, end: 0     },
+        "Trainee Investigator": { man: 14000, int: 28000, end: 0     },
+        "Secretary":            { man: 12500, int: 0,     end: 25000 },
+        "Intelligence Analyst": { man: 0,     int: 58000, end: 29000 },
+        "Surveillance":         { man: 26000, int: 52000, end: 0     },
+        "Chief Investigator":   { man: 40000, int: 80000, end: 0     },
+        "Client Liaison":       { man: 0,     int: 62000, end: 31000 }
       },
       "Farm": {
-        "Harvester":      { manual: 2, intelligence: 0, endurance: 1 },
-        "Delivery Driver":{ manual: 2, intelligence: 0, endurance: 1 },
-        "Herdsperson":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Farm Manager":   { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Consultant":     { manual: 0, intelligence: 2, endurance: 1 },
-        "Retailer":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Dairy Farmer":   { manual: 2, intelligence: 0, endurance: 1 },
-        "Poultry Farmer": { manual: 2, intelligence: 0, endurance: 1 }
+        "Harvester":      { man: 14000, int: 0,     end: 7000  },
+        "Delivery Driver":{ man: 23000, int: 0,     end: 11500 },
+        "Herdsperson":    { man: 18500, int: 0,     end: 9250  },
+        "Farm Manager":   { man: 0,     int: 18500, end: 37000 },
+        "Bookkeeper":     { man: 0,     int: 14000, end: 28000 },
+        "Consultant":     { man: 0,     int: 55500, end: 27750 },
+        "Retailer":       { man: 0,     int: 18500, end: 9250  },
+        "Dairy Farmer":   { man: 23000, int: 0,     end: 11500 },
+        "Poultry Farmer": { man: 18500, int: 0,     end: 9250  }
       },
       "Flower Shop": {
-        "Florist":    { manual: 1, intelligence: 0, endurance: 2 },
-        "Arranger":   { manual: 1, intelligence: 2, endurance: 0 },
-        "Apprentice": { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Accountant": { manual: 0, intelligence: 1, endurance: 2 }
+        "Florist":    { man: 500,  int: 0,    end: 1000 },
+        "Arranger":   { man: 500,  int: 1000, end: 0    },
+        "Apprentice": { man: 250,  int: 0,    end: 500  },
+        "Cleaner":    { man: 500,  int: 0,    end: 250  },
+        "Manager":    { man: 0,    int: 1000, end: 2000 },
+        "Marketer":   { man: 0,    int: 2000, end: 1000 },
+        "Accountant": { man: 0,    int: 750,  end: 1500 }
       },
       "Firework Stand": {
-        "Salesperson":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Pyrotechnician":      { manual: 2, intelligence: 1, endurance: 0 },
-        "Picker Packer":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":             { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Advertising Manager": { manual: 0, intelligence: 2, endurance: 1 },
-        "Trainer":             { manual: 0, intelligence: 2, endurance: 1 }
+        "Salesperson":         { man: 0,    int: 500,  end: 1000 },
+        "Pyrotechnician":      { man: 3000, int: 1500, end: 0    },
+        "Picker Packer":       { man: 500,  int: 0,    end: 250  },
+        "Manager":             { man: 0,    int: 1000, end: 2000 },
+        "Bookkeeper":          { man: 0,    int: 750,  end: 1500 },
+        "Advertising Manager": { man: 0,    int: 2000, end: 1000 },
+        "Trainer":             { man: 0,    int: 3000, end: 1500 }
       },
       "Fitness Center": {
-        "Personal Trainer":     { manual: 2, intelligence: 0, endurance: 1 },
-        "Swimming Instructor":  { manual: 1, intelligence: 0, endurance: 2 },
-        "Lifeguard":            { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":              { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":              { manual: 0, intelligence: 1, endurance: 2 },
-        "Receptionist":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":             { manual: 0, intelligence: 2, endurance: 1 },
-        "Human Resources":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Nutritionist":         { manual: 1, intelligence: 2, endurance: 0 },
-        "Fitness Instructor":   { manual: 2, intelligence: 0, endurance: 1 }
+        "Personal Trainer":    { man: 31000, int: 0,     end: 15500 },
+        "Swimming Instructor": { man: 23250, int: 0,     end: 46500 },
+        "Lifeguard":           { man: 19500, int: 0,     end: 39000 },
+        "Cleaner":             { man: 15500, int: 0,     end: 7750  },
+        "Manager":             { man: 0,     int: 31000, end: 62000 },
+        "Receptionist":        { man: 0,     int: 5000,  end: 10000 },
+        "Marketer":            { man: 0,     int: 62000, end: 31000 },
+        "Human Resources":     { man: 0,     int: 23250, end: 46500 },
+        "Nutritionist":        { man: 27250, int: 54500, end: 0     },
+        "Fitness Instructor":  { man: 46500, int: 0,     end: 23250 }
       },
       "Furniture Store": {
-        "Sales Clerk":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Delivery Driver":  { manual: 2, intelligence: 0, endurance: 1 },
-        "Apprentice":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Receptionist":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Trainer":          { manual: 0, intelligence: 2, endurance: 1 }
+        "Sales Clerk":     { man: 0,     int: 3250,  end: 6500  },
+        "Delivery Driver": { man: 8000,  int: 0,     end: 4000  },
+        "Apprentice":      { man: 0,     int: 750,   end: 1500  },
+        "Cleaner":         { man: 3500,  int: 0,     end: 1750  },
+        "Manager":         { man: 0,     int: 6500,  end: 13000 },
+        "Receptionist":    { man: 0,     int: 5000,  end: 10000 },
+        "Marketer":        { man: 0,     int: 13000, end: 6500  },
+        "Trainer":         { man: 0,     int: 19500, end: 9750  }
       },
       "Game Shop": {
-        "Clerk":          { manual: 1, intelligence: 0, endurance: 2 },
-        "Game Advisor":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Cleaner":        { manual: 2, intelligence: 0, endurance: 1 },
-        "Store Manager":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Accountant":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":       { manual: 0, intelligence: 2, endurance: 1 }
+        "Clerk":         { man: 1500, int: 0,    end: 3000 },
+        "Game Advisor":  { man: 0,    int: 4500, end: 2250 },
+        "Cleaner":       { man: 1500, int: 0,    end: 750  },
+        "Store Manager": { man: 0,    int: 3000, end: 6000 },
+        "Accountant":    { man: 0,    int: 2250, end: 4500 },
+        "Marketer":      { man: 0,    int: 6000, end: 3000 }
       },
       "Gas Station": {
-        "Attendant": { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":   { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":   { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Trainer":   { manual: 0, intelligence: 2, endurance: 1 }
+        "Attendant": { man: 0,     int: 13000, end: 26000 },
+        "Cleaner":   { man: 17500, int: 0,     end: 8750  },
+        "Manager":   { man: 0,     int: 30000, end: 60000 },
+        "Marketer":  { man: 0,     int: 40000, end: 20000 },
+        "Trainer":   { man: 0,     int: 70500, end: 35250 }
       },
       "Gents Strip Club": {
-        "Stripper":    { manual: 1, intelligence: 0, endurance: 2 },
-        "Security":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Cleaner":     { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Photographer":{ manual: 0, intelligence: 2, endurance: 1 }
+        "Stripper":    { man: 7250,  int: 0,     end: 14500 },
+        "Security":    { man: 29000, int: 0,     end: 14500 },
+        "Cleaner":     { man: 7500,  int: 0,     end: 3750  },
+        "Manager":     { man: 0,     int: 14500, end: 29000 },
+        "Bookkeeper":  { man: 0,     int: 11000, end: 22000 },
+        "Photographer":{ man: 0,     int: 29000, end: 14500 }
       },
       "Grocery Store": {
-        "Cashier":         { manual: 1, intelligence: 0, endurance: 2 },
-        "Stock Clerk":     { manual: 2, intelligence: 0, endurance: 1 },
-        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Accountant":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Delivery Driver": { manual: 2, intelligence: 0, endurance: 1 },
-        "Cart Attendant":  { manual: 2, intelligence: 0, endurance: 1 }
+        "Cashier":         { man: 3000,  int: 0,     end: 6000  },
+        "Stock Clerk":     { man: 4500,  int: 0,     end: 2250  },
+        "Cleaner":         { man: 3000,  int: 0,     end: 1500  },
+        "Manager":         { man: 0,     int: 6000,  end: 12000 },
+        "Accountant":      { man: 0,     int: 4500,  end: 9000  },
+        "Marketer":        { man: 0,     int: 12000, end: 6000  },
+        "Trainer":         { man: 0,     int: 18000, end: 9000  },
+        "Delivery Driver": { man: 7500,  int: 0,     end: 3750  },
+        "Cart Attendant":  { man: 3000,  int: 0,     end: 1500  }
       },
       "Gun Shop": {
-        "Clerk":       { manual: 1, intelligence: 0, endurance: 2 },
-        "Gunsmith":    { manual: 2, intelligence: 1, endurance: 0 },
-        "Cleaner":     { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Instructor":  { manual: 0, intelligence: 2, endurance: 1 }
+        "Clerk":       { man: 3750,  int: 0,     end: 7500  },
+        "Gunsmith":    { man: 15000, int: 7500,  end: 0     },
+        "Cleaner":     { man: 4000,  int: 0,     end: 2000  },
+        "Manager":     { man: 0,     int: 7500,  end: 15000 },
+        "Bookkeeper":  { man: 0,     int: 5750,  end: 11500 },
+        "Marketer":    { man: 0,     int: 15000, end: 7500  },
+        "Instructor":  { man: 0,     int: 22500, end: 11250 }
       },
       "Hair Salon": {
-        "Stylist":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Colorist":        { manual: 2, intelligence: 0, endurance: 1 },
-        "Nail Technician": { manual: 1, intelligence: 0, endurance: 2 },
-        "Apprentice":      { manual: 2, intelligence: 0, endurance: 1 },
-        "Shampooist":      { manual: 2, intelligence: 0, endurance: 1 },
-        "Senior Stylist":  { manual: 2, intelligence: 0, endurance: 1 },
-        "Receptionist":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Trainer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Aesthetician":    { manual: 0, intelligence: 2, endurance: 1 }
+        "Stylist":         { man: 1500, int: 0,    end: 750  },
+        "Colorist":        { man: 2000, int: 0,    end: 1000 },
+        "Nail Technician": { man: 750,  int: 0,    end: 1500 },
+        "Apprentice":      { man: 500,  int: 0,    end: 250  },
+        "Shampooist":      { man: 1000, int: 0,    end: 500  },
+        "Senior Stylist":  { man: 3000, int: 0,    end: 1500 },
+        "Receptionist":    { man: 0,    int: 1250, end: 2500 },
+        "Trainer":         { man: 0,    int: 4500, end: 2250 },
+        "Aesthetician":    { man: 0,    int: 4500, end: 2250 }
       },
       "Ladies Strip Club": {
-        "Male Stripper": { manual: 1, intelligence: 0, endurance: 2 },
-        "Security":      { manual: 2, intelligence: 0, endurance: 1 },
-        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Photographer":  { manual: 0, intelligence: 2, endurance: 1 }
+        "Male Stripper": { man: 7250,  int: 0,     end: 14500 },
+        "Security":      { man: 29000, int: 0,     end: 14500 },
+        "Cleaner":       { man: 8500,  int: 0,     end: 4250  },
+        "Manager":       { man: 0,     int: 16500, end: 33000 },
+        "Bookkeeper":    { man: 0,     int: 12500, end: 25000 },
+        "Photographer":  { man: 0,     int: 33000, end: 16500 }
       },
       "Law Firm": {
-        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Marketer":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Consultant": { manual: 0, intelligence: 2, endurance: 1 },
-        "Secretary":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Assistant":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Attorney":   { manual: 0, intelligence: 2, endurance: 1 }
+        "Cleaner":    { man: 5500,  int: 0,     end: 2750  },
+        "Marketer":   { man: 0,     int: 22000, end: 11000 },
+        "Consultant": { man: 0,     int: 33000, end: 16500 },
+        "Secretary":  { man: 0,     int: 8250,  end: 16500 },
+        "Assistant":  { man: 0,     int: 2750,  end: 5500  },
+        "Attorney":   { man: 0,     int: 11000, end: 5500  }
       },
       "Lingerie Store": {
-        "Salesperson":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":        { manual: 2, intelligence: 0, endurance: 1 },
-        "Store Manager":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Lingerie Model": { manual: 0, intelligence: 2, endurance: 1 },
-        "Human Resources":{ manual: 0, intelligence: 2, endurance: 1 },
-        "Trainee":        { manual: 0, intelligence: 1, endurance: 2 }
+        "Salesperson":    { man: 0,    int: 2250, end: 4500  },
+        "Cleaner":        { man: 2500, int: 0,    end: 1250  },
+        "Store Manager":  { man: 0,    int: 4500, end: 9000  },
+        "Lingerie Model": { man: 0,    int: 9000, end: 4500  },
+        "Human Resources":{ man: 0,    int: 13500,end: 6750  },
+        "Trainee":        { man: 0,    int: 500,  end: 1000  }
       },
       "Logistics Management": {
-        "Lumper":                { manual: 2, intelligence: 0, endurance: 1 },
-        "Driver":                { manual: 1, intelligence: 0, endurance: 2 },
-        "Forklift Operator":     { manual: 1, intelligence: 0, endurance: 2 },
-        "Transport Coordinator": { manual: 0, intelligence: 2, endurance: 1 },
-        "Warehouse Manager":     { manual: 0, intelligence: 2, endurance: 1 },
-        "Shift Manager":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Supply Chain Manager":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Procurement Manager":   { manual: 0, intelligence: 2, endurance: 1 }
+        "Lumper":                { man: 45000,  int: 0,      end: 22500 },
+        "Driver":                { man: 28750,  int: 0,      end: 57500 },
+        "Forklift Operator":     { man: 30000,  int: 0,      end: 60000 },
+        "Transport Coordinator": { man: 0,      int: 85000,  end: 42500 },
+        "Warehouse Manager":     { man: 0,      int: 115000, end: 57500 },
+        "Shift Manager":         { man: 0,      int: 90000,  end: 45000 },
+        "Supply Chain Manager":  { man: 0,      int: 125000, end: 62500 },
+        "Procurement Manager":   { man: 0,      int: 140000, end: 70000 }
       },
       "Meat Warehouse": {
-        "Quality Controller":  { manual: 1, intelligence: 2, endurance: 0 },
-        "Packer":              { manual: 2, intelligence: 0, endurance: 1 },
-        "Apprentice Butcher":  { manual: 2, intelligence: 0, endurance: 1 },
-        "Cleaner":             { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":             { manual: 0, intelligence: 1, endurance: 2 },
-        "Assistant":           { manual: 0, intelligence: 1, endurance: 2 },
-        "Supervisor":          { manual: 0, intelligence: 2, endurance: 1 },
-        "Butcher":             { manual: 2, intelligence: 0, endurance: 1 },
-        "Retailer":            { manual: 0, intelligence: 2, endurance: 1 }
+        "Quality Controller": { man: 12500, int: 25000, end: 0     },
+        "Packer":             { man: 9500,  int: 0,     end: 4750  },
+        "Apprentice Butcher": { man: 3000,  int: 0,     end: 1500  },
+        "Cleaner":            { man: 6500,  int: 0,     end: 3250  },
+        "Manager":            { man: 0,     int: 12500, end: 25000 },
+        "Assistant":          { man: 0,     int: 9500,  end: 19000 },
+        "Supervisor":         { man: 0,     int: 37500, end: 18750 },
+        "Butcher":            { man: 12500, int: 0,     end: 6250  },
+        "Retailer":           { man: 0,     int: 12500, end: 6250  }
       },
       "Mechanic Shop": {
-        "Technician":           { manual: 2, intelligence: 0, endurance: 1 },
-        "Apprentice Technician":{ manual: 2, intelligence: 0, endurance: 1 },
-        "Cleaner":              { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":              { manual: 0, intelligence: 1, endurance: 2 },
-        "Receptionist":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Trainer":              { manual: 0, intelligence: 2, endurance: 1 }
+        "Technician":            { man: 8500,  int: 0,     end: 4250  },
+        "Apprentice Technician": { man: 2000,  int: 0,     end: 1000  },
+        "Cleaner":               { man: 4500,  int: 0,     end: 2250  },
+        "Manager":               { man: 0,     int: 8500,  end: 17000 },
+        "Receptionist":          { man: 0,     int: 6500,  end: 13000 },
+        "Trainer":               { man: 0,     int: 25500, end: 12750 }
       },
       "Mining Corporation": {
-        "Sales Executive":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Mill Operator":      { manual: 2, intelligence: 0, endurance: 1 },
-        "Production Foreman": { manual: 1, intelligence: 0, endurance: 2 },
-        "Mine Engineer":      { manual: 0, intelligence: 2, endurance: 1 },
-        "Electrician":        { manual: 1, intelligence: 0, endurance: 2 },
-        "Safety Inspector":   { manual: 1, intelligence: 2, endurance: 0 },
-        "Site Manager":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Secretary":          { manual: 0, intelligence: 1, endurance: 2 }
+        "Sales Executive":    { man: 0,     int: 83000, end: 41500 },
+        "Mill Operator":      { man: 75000, int: 0,     end: 37500 },
+        "Production Foreman": { man: 39500, int: 0,     end: 79000 },
+        "Mine Engineer":      { man: 0,     int: 81000, end: 40500 },
+        "Electrician":        { man: 39000, int: 0,     end: 78000 },
+        "Safety Inspector":   { man: 47500, int: 95000, end: 0     },
+        "Site Manager":       { man: 0,     int: 97000, end: 48750 },
+        "Secretary":          { man: 0,     int: 39000, end: 78000 }
       },
       "Music Store": {
-        "Sales Assistant":  { manual: 0, intelligence: 1, endurance: 2 },
-        "Musician":         { manual: 1, intelligence: 2, endurance: 0 },
-        "Sales Apprentice": { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
-        "Supervisor":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Trainer":          { manual: 0, intelligence: 2, endurance: 1 }
+        "Sales Assistant":  { man: 0,    int: 1750, end: 3500 },
+        "Musician":         { man: 4500, int: 9000, end: 0    },
+        "Sales Apprentice": { man: 0,    int: 500,  end: 1000 },
+        "Cleaner":          { man: 2000, int: 0,    end: 1000 },
+        "Supervisor":       { man: 0,    int: 3500, end: 7000 },
+        "Bookkeeper":       { man: 0,    int: 2750, end: 5500 },
+        "Trainer":          { man: 0,    int: 10500,end: 5250 }
       },
       "Nightclub": {
-        "Bartender":         { manual: 1, intelligence: 0, endurance: 2 },
-        "Bouncer":           { manual: 2, intelligence: 0, endurance: 1 },
-        "Barback":           { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":           { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":           { manual: 0, intelligence: 1, endurance: 2 },
-        "Personal Assistant":{ manual: 0, intelligence: 1, endurance: 2 },
-        "Promoter":          { manual: 0, intelligence: 2, endurance: 1 },
-        "Trainer":           { manual: 0, intelligence: 2, endurance: 1 },
-        "Disk-jockey":       { manual: 0, intelligence: 2, endurance: 1 }
+        "Bartender":          { man: 13500, int: 0,     end: 27000 },
+        "Bouncer":            { man: 48000, int: 0,     end: 24000 },
+        "Barback":            { man: 10250, int: 0,     end: 20500 },
+        "Cleaner":            { man: 13500, int: 0,     end: 6750  },
+        "Manager":            { man: 0,     int: 27000, end: 54000 },
+        "Personal Assistant": { man: 0,     int: 20250, end: 40500 },
+        "Promoter":           { man: 0,     int: 54000, end: 27000 },
+        "Trainer":            { man: 0,     int: 81000, end: 40500 },
+        "Disk-jockey":        { man: 0,     int: 40500, end: 20250 }
       },
       "Oil Rig": {
-        "Driller":         { manual: 2, intelligence: 1, endurance: 0 },
-        "Roughneck":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Derrick Hand":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Secretary":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Inspector":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Sales Executive": { manual: 0, intelligence: 2, endurance: 1 },
-        "Motor Hand":      { manual: 2, intelligence: 1, endurance: 0 }
+        "Driller":         { man: 150000, int: 75000,  end: 0      },
+        "Roughneck":       { man: 75000,  int: 0,      end: 37500  },
+        "Derrick Hand":    { man: 94000,  int: 0,      end: 47000  },
+        "Secretary":       { man: 0,      int: 56250,  end: 112500 },
+        "Inspector":       { man: 0,      int: 225000, end: 112500 },
+        "Sales Executive": { man: 0,      int: 131500, end: 65750  },
+        "Motor Hand":      { man: 112500, int: 56250,  end: 0      }
       },
       "Private Security Firm": {
-        "Security Contractor": { manual: 2, intelligence: 0, endurance: 1 },
-        "Team Leader":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Defence Consultant":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Spokesperson":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Company Liaison":     { manual: 0, intelligence: 1, endurance: 2 },
-        "Chief Strategist":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Reconnaissance":      { manual: 2, intelligence: 1, endurance: 0 },
-        "Disposal Engineer":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Armourer":            { manual: 1, intelligence: 0, endurance: 2 },
-        "Medic":               { manual: 0, intelligence: 2, endurance: 1 },
-        "Comms Engineer":      { manual: 0, intelligence: 2, endurance: 1 }
+        "Security Contractor": { man: 70000,  int: 0,      end: 35000 },
+        "Team Leader":         { man: 110000, int: 0,      end: 55000 },
+        "Defence Consultant":  { man: 0,      int: 135000, end: 67500 },
+        "Spokesperson":        { man: 0,      int: 80000,  end: 40000 },
+        "Company Liaison":     { man: 0,      int: 57500,  end: 115000},
+        "Chief Strategist":    { man: 0,      int: 165000, end: 82500 },
+        "Reconnaissance":      { man: 80000,  int: 40000,  end: 0     },
+        "Disposal Engineer":   { man: 0,      int: 85000,  end: 42500 },
+        "Armourer":            { man: 40000,  int: 0,      end: 80000 },
+        "Medic":               { man: 0,      int: 90000,  end: 45000 },
+        "Comms Engineer":      { man: 0,      int: 85000,  end: 42500 }
       },
       "Property Broker": {
-        "Property Broker":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Valuation Specialist":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Associate Broker":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":               { manual: 2, intelligence: 0, endurance: 1 },
-        "Team Manager":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Receptionist":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Graphic Designer":      { manual: 0, intelligence: 2, endurance: 1 },
-        "Broker Support":        { manual: 0, intelligence: 2, endurance: 1 }
+        "Property Broker":      { man: 0,    int: 750,  end: 1500 },
+        "Valuation Specialist": { man: 0,    int: 3000, end: 1500 },
+        "Associate Broker":     { man: 0,    int: 250,  end: 500  },
+        "Cleaner":              { man: 1000, int: 0,    end: 500  },
+        "Team Manager":         { man: 0,    int: 1500, end: 3000 },
+        "Receptionist":         { man: 0,    int: 1250, end: 2500 },
+        "Graphic Designer":     { man: 0,    int: 3000, end: 1500 },
+        "Broker Support":       { man: 0,    int: 4500, end: 2250 }
       },
       "Pub": {
-        "Bartender":  { manual: 1, intelligence: 0, endurance: 2 },
-        "Bouncer":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Waiter":     { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper": { manual: 0, intelligence: 1, endurance: 2 },
-        "Trainer":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Promoter":   { manual: 0, intelligence: 2, endurance: 1 }
+        "Bartender":  { man: 1500, int: 0,    end: 3000 },
+        "Bouncer":    { man: 6000, int: 0,    end: 3000 },
+        "Waiter":     { man: 1500, int: 0,    end: 3000 },
+        "Cleaner":    { man: 1500, int: 0,    end: 750  },
+        "Manager":    { man: 0,    int: 3000, end: 6000 },
+        "Bookkeeper": { man: 0,    int: 2250, end: 4500 },
+        "Trainer":    { man: 0,    int: 9000, end: 4500 },
+        "Promoter":   { man: 0,    int: 6000, end: 3000 }
       },
       "Restaurant": {
-        "Waiter":           { manual: 1, intelligence: 0, endurance: 2 },
-        "Sous Chef":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Head Chef":        { manual: 0, intelligence: 1, endurance: 2 },
-        "Kitchen Assistant":{ manual: 2, intelligence: 0, endurance: 1 },
-        "Head Waiter":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Line Cook":        { manual: 1, intelligence: 2, endurance: 0 },
-        "Chef":             { manual: 1, intelligence: 2, endurance: 0 },
-        "Apprentice Chef":  { manual: 1, intelligence: 2, endurance: 0 },
-        "Dishwasher":       { manual: 2, intelligence: 0, endurance: 1 }
+        "Waiter":           { man: 1250, int: 0,    end: 2500 },
+        "Sous Chef":        { man: 0,    int: 4000, end: 2000 },
+        "Head Chef":        { man: 0,    int: 2500, end: 5000 },
+        "Kitchen Assistant":{ man: 1500, int: 0,    end: 750  },
+        "Head Waiter":      { man: 0,    int: 2000, end: 4000 },
+        "Line Cook":        { man: 1250, int: 2500, end: 0    },
+        "Chef":             { man: 1500, int: 3000, end: 0    },
+        "Apprentice Chef":  { man: 750,  int: 1500, end: 0    },
+        "Dishwasher":       { man: 1500, int: 0,    end: 750  }
       },
       "Software Corporation": {
-        "Developer":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Tester":           { manual: 0, intelligence: 2, endurance: 1 },
-        "Graphic Designer": { manual: 0, intelligence: 2, endurance: 1 },
-        "Apprentice":       { manual: 0, intelligence: 2, endurance: 1 },
-        "Cleaner":          { manual: 2, intelligence: 0, endurance: 1 },
-        "Lead Developer":   { manual: 0, intelligence: 1, endurance: 2 },
-        "Analyst":          { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Consultant":       { manual: 0, intelligence: 2, endurance: 1 }
+        "Developer":        { man: 0,     int: 24000, end: 12000 },
+        "Tester":           { man: 0,     int: 12000, end: 6000  },
+        "Graphic Designer": { man: 0,     int: 18000, end: 9000  },
+        "Apprentice":       { man: 0,     int: 6000,  end: 3000  },
+        "Cleaner":          { man: 12000, int: 0,     end: 6000  },
+        "Lead Developer":   { man: 0,     int: 24000, end: 48000 },
+        "Analyst":          { man: 0,     int: 18000, end: 36000 },
+        "Marketer":         { man: 0,     int: 48000, end: 24000 },
+        "Consultant":       { man: 0,     int: 72000, end: 36000 }
       },
       "Sweet Shop": {
-        "Confectionist": { manual: 0, intelligence: 2, endurance: 1 },
-        "Packager":      { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":      { manual: 0, intelligence: 2, endurance: 1 },
-        "Clerk":         { manual: 1, intelligence: 0, endurance: 2 }
+        "Confectionist": { man: 0,    int: 2500, end: 1250 },
+        "Packager":      { man: 750,  int: 0,    end: 1500 },
+        "Cleaner":       { man: 1000, int: 0,    end: 500  },
+        "Manager":       { man: 0,    int: 2000, end: 4000 },
+        "Bookkeeper":    { man: 0,    int: 1500, end: 3000 },
+        "Marketer":      { man: 0,    int: 4000, end: 2000 },
+        "Clerk":         { man: 1000, int: 0,    end: 2000 }
       },
       "Television Network": {
-        "Producer":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Programmer":      { manual: 0, intelligence: 2, endurance: 1 },
-        "Camera Operator": { manual: 1, intelligence: 2, endurance: 0 },
-        "Sales Executive": { manual: 0, intelligence: 1, endurance: 2 },
-        "Cleaner":         { manual: 2, intelligence: 0, endurance: 1 },
-        "Attorney":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Secretary":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketer":        { manual: 0, intelligence: 2, endurance: 1 },
-        "Writer":          { manual: 0, intelligence: 2, endurance: 1 },
-        "Stagehand":       { manual: 2, intelligence: 0, endurance: 1 },
-        "Anchor":          { manual: 0, intelligence: 2, endurance: 1 },
-        "Reporter":        { manual: 0, intelligence: 2, endurance: 1 }
+        "Producer":        { man: 0,     int: 99000,  end: 49500 },
+        "Programmer":      { man: 0,     int: 66000,  end: 33000 },
+        "Camera Operator": { man: 24750, int: 49500,  end: 0     },
+        "Sales Executive": { man: 0,     int: 24750,  end: 49500 },
+        "Cleaner":         { man: 33000, int: 0,      end: 16500 },
+        "Attorney":        { man: 0,     int: 132000, end: 66000 },
+        "Secretary":       { man: 0,     int: 49500,  end: 99000 },
+        "Marketer":        { man: 0,     int: 132000, end: 66000 },
+        "Writer":          { man: 0,     int: 115500, end: 57750 },
+        "Stagehand":       { man: 33000, int: 0,      end: 16500 },
+        "Anchor":          { man: 0,     int: 132000, end: 66000 },
+        "Reporter":        { man: 0,     int: 82500,  end: 41250 }
       },
       "Theater": {
-        "Ticketing Agent":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Technician":         { manual: 2, intelligence: 1, endurance: 0 },
-        "Programmer":         { manual: 0, intelligence: 2, endurance: 1 },
-        "Janitor":            { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":            { manual: 0, intelligence: 1, endurance: 2 },
-        "Accountant":         { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketing Manager":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Usher":              { manual: 1, intelligence: 0, endurance: 2 }
+        "Ticketing Agent":   { man: 0,     int: 10000, end: 20000 },
+        "Technician":        { man: 60000, int: 30000, end: 0     },
+        "Programmer":        { man: 0,     int: 50000, end: 25000 },
+        "Janitor":           { man: 20000, int: 0,     end: 10000 },
+        "Manager":           { man: 0,     int: 40000, end: 80000 },
+        "Accountant":        { man: 0,     int: 30000, end: 60000 },
+        "Marketing Manager": { man: 0,     int: 80000, end: 40000 },
+        "Usher":             { man: 10000, int: 0,     end: 20000 }
       },
       "Toy Shop": {
-        "Sales Assistant":    { manual: 1, intelligence: 0, endurance: 2 },
-        "Cleaner":            { manual: 2, intelligence: 0, endurance: 1 },
-        "Store Manager":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Office Clerk":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Marketing Executive":{ manual: 0, intelligence: 2, endurance: 1 },
-        "Training Advisor":   { manual: 0, intelligence: 2, endurance: 1 },
-        "Stock Clerk":        { manual: 2, intelligence: 0, endurance: 1 }
+        "Sales Assistant":     { man: 2500, int: 0,     end: 5000  },
+        "Cleaner":             { man: 2500, int: 0,     end: 1250  },
+        "Store Manager":       { man: 0,    int: 5000,  end: 10000 },
+        "Office Clerk":        { man: 0,    int: 3750,  end: 7500  },
+        "Marketing Executive": { man: 0,    int: 10000, end: 5000  },
+        "Training Advisor":    { man: 0,    int: 15000, end: 7500  },
+        "Stock Clerk":         { man: 4000, int: 0,     end: 2000  }
       },
       "Zoo": {
-        "Zoo Keeper":    { manual: 2, intelligence: 0, endurance: 1 },
-        "Animal Trainer":{ manual: 1, intelligence: 2, endurance: 0 },
-        "Aquarist":      { manual: 0, intelligence: 1, endurance: 2 },
-        "Intern":        { manual: 2, intelligence: 0, endurance: 1 },
-        "Manager":       { manual: 0, intelligence: 1, endurance: 2 },
-        "Bookkeeper":    { manual: 0, intelligence: 1, endurance: 2 },
-        "Photographer":  { manual: 0, intelligence: 2, endurance: 1 },
-        "Consultant":    { manual: 0, intelligence: 2, endurance: 1 },
-        "Veterinarian":  { manual: 1, intelligence: 2, endurance: 0 },
-        "Cashier":       { manual: 0, intelligence: 1, endurance: 2 }
+        "Zoo Keeper":    { man: 58000, int: 0,      end: 29000 },
+        "Animal Trainer":{ man: 36250, int: 72500,  end: 0     },
+        "Aquarist":      { man: 0,     int: 29000,  end: 58000 },
+        "Intern":        { man: 14500, int: 0,      end: 7250  },
+        "Manager":       { man: 0,     int: 58000,  end: 116000},
+        "Bookkeeper":    { man: 0,     int: 43500,  end: 87000 },
+        "Photographer":  { man: 0,     int: 116000, end: 58000 },
+        "Consultant":    { man: 0,     int: 174000, end: 87000 },
+        "Veterinarian":  { man: 58000, int: 116000, end: 0     },
+        "Cashier":       { man: 0,     int: 14500,  end: 29000 }
       }
     };
 
@@ -837,19 +840,43 @@
       }
     }
 
-    // ─── Suggestions engine ───────────────────────────────────────────────────
-    // Low-value roles to deprioritise (fill last with whoever is left over)
-    const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
+    // ─── Scoring engine — real stat comparison ────────────────────────────────
+    // Scores how well an employee fits a role based on actual recommended stats.
+    // Strategy: for each stat the role cares about, calculate how close the
+    // employee is as a % of the target (capped at 100%). Average the active stats.
+    // Result: 0–100 fit score. Employees at or above recommended get 100 on that stat.
+    function scoreFit(employee, targets) {
+      const checks = [
+        { target: targets.man, actual: employee.manual_labor  },
+        { target: targets.int, actual: employee.intelligence  },
+        { target: targets.end, actual: employee.endurance     }
+      ].filter(c => c.target > 0);
 
-    function scoreFit(employee, weights) {
-      const total = weights.manual + weights.intelligence + weights.endurance;
-      if (total === 0) return 0;
-      return Math.round(
-        (employee.manual_labor   * weights.manual       +
-         employee.intelligence   * weights.intelligence  +
-         employee.endurance      * weights.endurance) / total
-      );
+      if (checks.length === 0) return 0;
+      const avg = checks.reduce((sum, c) => sum + Math.min(100, Math.round((c.actual / c.target) * 100)), 0) / checks.length;
+      return Math.round(avg);
     }
+
+    // For display: show how far the employee is from each target stat
+    function statGapSummary(employee, targets) {
+      const parts = [];
+      if (targets.man > 0) {
+        const pct = Math.min(100, Math.round((employee.manual_labor / targets.man) * 100));
+        parts.push(`MAN ${pct}%`);
+      }
+      if (targets.int > 0) {
+        const pct = Math.min(100, Math.round((employee.intelligence / targets.int) * 100));
+        parts.push(`INT ${pct}%`);
+      }
+      if (targets.end > 0) {
+        const pct = Math.min(100, Math.round((employee.endurance / targets.end) * 100));
+        parts.push(`END ${pct}%`);
+      }
+      return parts.join(' · ');
+    }
+
+    // Low-value roles filled last
+    const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
 
     /**
      * Greedy optimal assignment:
@@ -1119,14 +1146,17 @@
             ? `Move from: ${currentRole}`
             : `✓ Already in role`;
           const changeClass = isMismatch ? 'move' : 'stay';
+          const roles = COMPANY_ROLES[companyType];
+          const gap = roles ? statGapSummary(employee, roles[role]) : '';
           html += `<div class="assign-card ${cardClass}${isLowValue ? '" style="opacity:0.7' : ''}">
             <div class="assign-left">
               <div class="assign-role">${role}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}</div>
               <div class="assign-name">${employee.name} [${employee.id}]</div>
               <div class="assign-change ${changeClass}">${changeLabel}</div>
+              ${gap ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${gap} of target</div>` : ''}
             </div>
             <div class="assign-right">
-              <div class="assign-score">${score.toLocaleString()}</div>
+              <div class="assign-score">${score}%</div>
               <div class="assign-score-label">Fit Score</div>
             </div>
           </div>`;
