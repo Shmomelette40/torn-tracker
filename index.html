@@ -168,7 +168,66 @@
     .status-badge.travelling { background: #e0f2fe; color: #0369a1; }
     .status-badge.abroad { background: #e0f2fe; color: #0369a1; }
     .employee-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .employee-details.expanded { max-height: 500px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    .employee-details.expanded { max-height: 2000px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    /* ── Trains counter ── */
+    .trains-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 4px;
+    }
+    .trains-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .trains-last { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .trains-controls { display: flex; align-items: center; gap: 8px; }
+    .trains-btn {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-color);
+      background: var(--border-color); color: var(--text-primary); font-size: 16px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      padding: 0; width: auto; padding: 0 10px; font-size: 13px;
+    }
+    .trains-btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); opacity: 1; }
+    .trains-count { font-size: 20px; font-weight: 800; color: var(--accent-color); min-width: 32px; text-align: center; }
+    /* ── Custom fields ── */
+    .custom-fields-section { margin-top: 12px; }
+    .custom-field-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border-color); gap: 8px;
+    }
+    .custom-field-name { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; min-width: 80px; flex-shrink: 0; }
+    .custom-field-value {
+      flex: 1; font-size: 13px; color: var(--text-primary); background: none; border: none;
+      outline: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; min-width: 0;
+    }
+    .custom-field-value:focus { background: var(--border-color); cursor: text; }
+    .custom-field-delete {
+      background: none; border: none; color: var(--text-secondary); cursor: pointer;
+      font-size: 14px; padding: 0 4px; width: auto; opacity: 0.5; flex-shrink: 0;
+    }
+    .custom-field-delete:hover { color: #991b1b; opacity: 1; }
+    /* ── Add field UI ── */
+    .add-field-btn {
+      width: 100%; margin-top: 12px; padding: 8px; font-size: 12px; font-weight: 600;
+      background: none; border: 1px dashed var(--border-color); color: var(--text-secondary);
+      border-radius: 6px; cursor: pointer; text-align: center;
+    }
+    .add-field-btn:hover { border-color: var(--accent-color); color: var(--accent-color); opacity: 1; }
+    .add-field-form { margin-top: 10px; padding: 10px; background: var(--border-color); border-radius: 8px; }
+    .add-field-input {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px;
+      font-size: 13px; background: var(--card-bg); color: var(--text-primary); margin-bottom: 8px;
+    }
+    .add-field-input:focus { outline: none; border-color: var(--accent-color); }
+    .add-field-actions { display: flex; gap: 6px; }
+    .add-field-save {
+      flex: 1; padding: 8px; font-size: 12px; font-weight: 700; border-radius: 6px;
+      border: none; cursor: pointer; background: var(--accent-color); color: white;
+    }
+    .add-field-save-all {
+      flex: 1; padding: 8px; font-size: 12px; font-weight: 700; border-radius: 6px;
+      border: 1px solid var(--accent-color); cursor: pointer; background: none; color: var(--accent-color);
+    }
+    .add-field-cancel {
+      padding: 8px 12px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border-color);
+      cursor: pointer; background: none; color: var(--text-secondary); width: auto;
+    }
     .eff-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
     .eff-item { background: var(--border-color); padding: 8px; border-radius: 4px; font-size: 12px; }
     .eff-label { color: var(--text-secondary); font-size: 10px; text-transform: uppercase; }
@@ -820,6 +879,9 @@
         document.getElementById('exportCsvBtn').style.display = 'none';
         document.getElementById('exportPdfBtn').style.display = 'none';
         companyData = null; userData = null; currentApiKey = null;
+        // Clear session annotations
+        Object.keys(sessionData).forEach(k => delete sessionData[k]);
+        globalFields.clear();
       }
       toggleMenu();
     }
@@ -829,7 +891,16 @@
     }
 
     function toggleEmployeeDetails(id) {
-      document.getElementById(`details-${id}`).classList.toggle('expanded');
+      const detailsEl = document.getElementById(`details-${id}`);
+      detailsEl.classList.toggle('expanded');
+      // Seed any global fields and refresh display when opening
+      if (detailsEl.classList.contains('expanded')) {
+        const d = getEmpData(id);
+        globalFields.forEach(name => {
+          if (!(name in d.customFields)) d.customFields[name] = '';
+        });
+        refreshEmpDetails(id);
+      }
     }
 
     function toggleSection(bodyId, btnId) {
@@ -1009,6 +1080,152 @@
       40: "Logistics Management"
     };
 
+    // ─── Session data store (replaced by backend later) ──────────────────────
+    // Structure: { [employeeId]: { trains, lastTrained, customFields: {name: value} } }
+    // globalFields: field names that apply to all employees
+    const sessionData = {};
+    const globalFields = new Set();
+
+    function getEmpData(id) {
+      if (!sessionData[id]) sessionData[id] = { trains: 0, lastTrained: null, customFields: {} };
+      return sessionData[id];
+    }
+
+    // ── Trains ────────────────────────────────────────────────────────────────
+    function adjustTrains(id, delta, event) {
+      event.stopPropagation();
+      const d = getEmpData(id);
+      d.trains = Math.max(0, (d.trains || 0) + delta);
+      if (delta > 0) d.lastTrained = Date.now();
+      refreshEmpDetails(id);
+    }
+
+    // ── Custom fields ─────────────────────────────────────────────────────────
+    function showAddFieldForm(id, event) {
+      event.stopPropagation();
+      document.getElementById(`add-field-form-${id}`).style.display = 'block';
+      document.getElementById(`add-field-btn-${id}`).style.display = 'none';
+      document.getElementById(`field-name-input-${id}`).focus();
+    }
+
+    function hideAddFieldForm(id, event) {
+      if (event) event.stopPropagation();
+      document.getElementById(`add-field-form-${id}`).style.display = 'none';
+      document.getElementById(`add-field-btn-${id}`).style.display = 'block';
+      document.getElementById(`field-name-input-${id}`).value = '';
+      document.getElementById(`field-value-input-${id}`).value = '';
+    }
+
+    function saveCustomField(id, forAll, event) {
+      event.stopPropagation();
+      const nameEl  = document.getElementById(`field-name-input-${id}`);
+      const valueEl = document.getElementById(`field-value-input-${id}`);
+      const name  = nameEl.value.trim();
+      const value = valueEl.value.trim();
+      if (!name) { nameEl.focus(); return; }
+
+      if (forAll) {
+        // Add to global field registry and all existing employees
+        globalFields.add(name);
+        Object.keys(sessionData).forEach(eid => {
+          const d = getEmpData(eid);
+          if (!(name in d.customFields)) d.customFields[name] = '';
+        });
+        // Also add to all current employees not yet in sessionData
+        if (companyData) {
+          Object.keys(companyData.company_employees).forEach(eid => {
+            const d = getEmpData(eid);
+            if (!(name in d.customFields)) d.customFields[name] = '';
+          });
+        }
+        // Set value on current employee
+        getEmpData(id).customFields[name] = value;
+        // Refresh all visible employee details
+        if (companyData) {
+          Object.keys(companyData.company_employees).forEach(eid => refreshEmpDetails(eid));
+        }
+      } else {
+        getEmpData(id).customFields[name] = value;
+        refreshEmpDetails(id);
+      }
+      hideAddFieldForm(id, null);
+    }
+
+    function updateCustomField(id, fieldName, value, event) {
+      if (event) event.stopPropagation();
+      getEmpData(id).customFields[fieldName] = value;
+    }
+
+    function deleteCustomField(id, fieldName, isGlobal, event) {
+      event.stopPropagation();
+      if (isGlobal) {
+        // Remove from all employees
+        globalFields.delete(fieldName);
+        Object.keys(sessionData).forEach(eid => {
+          delete sessionData[eid].customFields[fieldName];
+        });
+        if (companyData) {
+          Object.keys(companyData.company_employees).forEach(eid => refreshEmpDetails(eid));
+        }
+      } else {
+        delete getEmpData(id).customFields[fieldName];
+        refreshEmpDetails(id);
+      }
+    }
+
+    // ── Refresh a single employee's expanded details panel ────────────────────
+    function refreshEmpDetails(id) {
+      const detailsEl = document.getElementById(`details-${id}`);
+      if (!detailsEl) return;
+      const trainsEl = document.getElementById(`trains-count-${id}`);
+      const lastEl   = document.getElementById(`trains-last-${id}`);
+      const fieldsEl = document.getElementById(`custom-fields-${id}`);
+      if (!trainsEl) return;
+
+      const d = getEmpData(id);
+
+      // Update trains count
+      trainsEl.textContent = d.trains || 0;
+
+      // Update last trained label
+      if (lastEl) {
+        if (d.lastTrained) {
+          const hoursAgo = Math.floor((Date.now() - d.lastTrained) / 3600000);
+          lastEl.textContent = hoursAgo < 1 ? 'Last: just now' :
+            hoursAgo < 24 ? `Last: ${hoursAgo}h ago` :
+            `Last: ${Math.floor(hoursAgo / 24)}d ago`;
+        } else {
+          lastEl.textContent = 'Not yet trained this session';
+        }
+      }
+
+      // Rebuild custom fields
+      if (fieldsEl) {
+        // Merge global fields into this employee's data
+        globalFields.forEach(name => {
+          if (!(name in d.customFields)) d.customFields[name] = '';
+        });
+
+        const allFields = Object.entries(d.customFields);
+        if (allFields.length === 0) {
+          fieldsEl.innerHTML = '';
+          return;
+        }
+        fieldsEl.innerHTML = allFields.map(([name, value]) => {
+          const isGlobal = globalFields.has(name);
+          return `<div class="custom-field-row">
+            <span class="custom-field-name">${name}${isGlobal ? ' <span title="Global field" style="opacity:0.5">🌐</span>' : ''}</span>
+            <input class="custom-field-value" value="${value.replace(/"/g, '&quot;')}"
+              placeholder="Enter value…"
+              onclick="event.stopPropagation()"
+              onchange="updateCustomField('${id}', '${name}', this.value, event)"
+              oninput="updateCustomField('${id}', '${name}', this.value, event)">
+            <button class="custom-field-delete" onclick="deleteCustomField('${id}', '${name}', ${isGlobal}, event)" title="${isGlobal ? 'Remove from all employees' : 'Remove'}">×</button>
+          </div>`;
+        }).join('');
+      }
+    }
+
     // ─── Main display ─────────────────────────────────────────────────────────
     function displayCompanyData(data) {
       const container    = document.getElementById('dataContainer');
@@ -1142,6 +1359,41 @@
                   <div class="eff-item"><div class="eff-label">Inactivity</div><div class="eff-value ${eb.inactivity < 0 ? 'negative' : 'positive'}">${eb.inactivity || 0}%</div></div>
                 </div>
                 <div style="margin-top: 12px; padding: 8px; background: var(--border-color); border-radius: 4px; text-align: center;"><strong>Total Effectiveness: ${eff}%</strong></div>
+
+                <!-- ── Trains counter ── -->
+                <div class="trains-row">
+                  <div>
+                    <div class="trains-label">🏋️ Director Trains</div>
+                    <div class="trains-last" id="trains-last-${id}">Not yet trained this session</div>
+                  </div>
+                  <div class="trains-controls" onclick="event.stopPropagation()">
+                    <button class="trains-btn" onclick="adjustTrains('${id}', -1, event)">−</button>
+                    <div class="trains-count" id="trains-count-${id}">0</div>
+                    <button class="trains-btn" onclick="adjustTrains('${id}', 1, event)">+</button>
+                  </div>
+                </div>
+
+                <!-- ── Custom fields ── -->
+                <div class="custom-fields-section" id="custom-fields-${id}"></div>
+
+                <!-- ── Add field UI ── -->
+                <button class="add-field-btn" id="add-field-btn-${id}"
+                  onclick="showAddFieldForm('${id}', event)">+ Add Custom Field</button>
+
+                <div class="add-field-form" id="add-field-form-${id}" style="display:none"
+                  onclick="event.stopPropagation()">
+                  <input class="add-field-input" id="field-name-input-${id}"
+                    placeholder="Field name (e.g. Notes, Discord, Timezone…)"
+                    onkeydown="if(event.key==='Escape') hideAddFieldForm('${id}', event)">
+                  <input class="add-field-input" id="field-value-input-${id}"
+                    placeholder="Value (optional — can be filled in later)"
+                    onkeydown="if(event.key==='Escape') hideAddFieldForm('${id}', event)">
+                  <div class="add-field-actions">
+                    <button class="add-field-save" onclick="saveCustomField('${id}', false, event)">💾 Save</button>
+                    <button class="add-field-save-all" onclick="saveCustomField('${id}', true, event)">🌐 Save for All</button>
+                    <button class="add-field-cancel" onclick="hideAddFieldForm('${id}', event)">Cancel</button>
+                  </div>
+                </div>
               </div>
             </div>`;
         });
