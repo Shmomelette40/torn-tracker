@@ -156,6 +156,7 @@
     .effectiveness.medium { background: #fef3c7; color: #92400e; }
     .effectiveness.low { background: #fee2e2; color: #991b1b; }
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    @media (max-width: 380px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
     .stat-box { text-align: center; padding: 8px; background: var(--border-color); border-radius: 6px; }
     .stat-box-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
     .stat-box-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
@@ -164,6 +165,8 @@
     .status-badge.offline { background: #f1f5f9; color: #64748b; }
     .status-badge.idle { background: #fef3c7; color: #92400e; }
     .status-badge.hospital { background: #fee2e2; color: #991b1b; }
+    .status-badge.travelling { background: #e0f2fe; color: #0369a1; }
+    .status-badge.abroad { background: #e0f2fe; color: #0369a1; }
     .employee-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .employee-details.expanded { max-height: 500px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
     .eff-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
@@ -200,23 +203,25 @@
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <div class="dropdown-content" id="menuDropdown">
           <div class="dropdown-item" onclick="refreshData()" id="refreshBtn">🔄 Refresh Data</div>
+          <div class="dropdown-item" onclick="exportCSV()" id="exportCsvBtn" style="display:none">📥 Export CSV</div>
+          <div class="dropdown-item" onclick="exportPDF()" id="exportPdfBtn" style="display:none">🖨️ Export PDF</div>
           <div class="dropdown-item" onclick="toggleDarkMode()"><span id="darkModeIcon">🌙</span> Dark Mode</div>
           <div class="dropdown-item" onclick="showApiTerms()">📄 API Terms</div>
           <div class="dropdown-item hidden" onclick="showSettings()" id="settingsBtn">⚙️ Settings</div>
         </div>
       </div>
     </div>
- 
+
     <div class="card" id="loginCard">
       <h2>Connect Your Company</h2>
       <div class="input-group">
         <label for="apiKey">Torn API Key <span class="info-icon" onclick="showApiInfo()">?</span></label>
         <input type="text" id="apiKey" placeholder="Enter your 16-character API key" autocomplete="off">
-        <div class="disclaimer">⚠️ <strong>Demo Version:</strong> No data is saved. When you close this page, all data is lost. For historical tracking and charts, the full platform is coming soon.</div>
+        <div class="disclaimer">⚠️ <strong>Preview Version:</strong> Data is not saved between sessions. Historical tracking, stat growth charts, and persistent data are coming in the full platform.</div>
       </div>
       <button id="loadBtn" onclick="loadCompanyData()">Load Company Data</button>
     </div>
- 
+
     <div class="card hidden" id="welcomeCard">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -226,19 +231,19 @@
       </div>
       <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"><span id="syncInfo2"></span></div>
     </div>
- 
+
     <div id="errorContainer"></div>
     <div id="loadingContainer" class="hidden">
-      <div class="card"><div class="loading">⏳ Loading company data...</div></div>
+      <div class="card"><div class="loading" id="loadingMsg">⏳ Loading company data...</div></div>
     </div>
     <div id="dataContainer"></div>
- 
+
     <div class="footer">
       <div>Created and managed by <strong>Shmomelette [4104345]</strong></div>
       <div style="margin-top: 8px;"><a href="https://ko-fi.com/shmomelette" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a></div>
     </div>
   </div>
- 
+
   <div id="apiModal" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="closeModal('apiModal')">&times;</span>
@@ -247,7 +252,7 @@
       <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">Generate an API key in:<br><strong>Torn → Settings → API</strong></p>
     </div>
   </div>
- 
+
   <div id="termsModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
       <span class="close-modal" onclick="closeModal('termsModal')">&times;</span>
@@ -262,10 +267,10 @@
       </div>
     </div>
   </div>
- 
+
   <script>
     let companyData = null, userData = null, currentApiKey = null;
- 
+
     // ─── COMPANY ROLE DATA — real recommended stats from Torn wiki ───────────
     // Each role: { man: primary, int: primary, end: primary, man2: secondary, int2: secondary, end2: secondary }
     // Primary stat = first number in "X STAT / Y STAT2", secondary = second number.
@@ -664,7 +669,7 @@
         "Cashier":       { man: 0,     int: 14500,  end: 29000 }
       }
     };
- 
+
     // ─── Dark mode ────────────────────────────────────────────────────────────
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
@@ -677,7 +682,7 @@
       document.body.classList.add('dark-mode');
       document.getElementById('darkModeIcon').textContent = '☀️';
     }
- 
+
     function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
     window.onclick = function(event) {
       if (!event.target.matches('.menu-btn')) {
@@ -688,7 +693,7 @@
     function showApiInfo() { document.getElementById('apiModal').style.display = 'block'; }
     function showApiTerms() { document.getElementById('termsModal').style.display = 'block'; toggleMenu(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
- 
+
     // ─── Load / Refresh ───────────────────────────────────────────────────────
     async function loadCompanyData() {
       const apiKey = document.getElementById('apiKey').value.trim();
@@ -696,19 +701,19 @@
       if (apiKey.length !== 16) { showError('API key should be 16 characters long'); return; }
       await fetchCompanyData(apiKey);
     }
- 
+
     async function refreshData() {
       if (!currentApiKey) { showError('No API key stored. Please reconnect.'); return; }
       toggleMenu();
       await fetchCompanyData(currentApiKey);
     }
- 
+
     async function fetchCompanyData(apiKey) {
       document.getElementById('errorContainer').innerHTML = '';
       document.getElementById('dataContainer').innerHTML = '';
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadBtn').disabled = true;
- 
+
       try {
         const userResponse = await fetch(
           `https://api.torn.com/user/?selections=basic&key=${apiKey}`,
@@ -717,10 +722,10 @@
         if (!userResponse.ok) throw new Error(`HTTP error! status: ${userResponse.status}`);
         const userDataRaw = await userResponse.json();
         if (userDataRaw.error) throw new Error(formatApiError(userDataRaw.error));
- 
+
         userData = userDataRaw;
         currentApiKey = apiKey;
- 
+
         const response = await fetch(
           `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`,
           { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
@@ -728,7 +733,7 @@
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(formatApiError(data.error));
- 
+
         const companyInfo = data.company || data.company_detailed;
         if (companyInfo.director !== userData.player_id) {
           throw new Error(
@@ -736,13 +741,13 @@
             'If you are a director, make sure you are using the API key linked to your director account.'
           );
         }
- 
+
         companyData = data;
- 
+
         // ── Fetch employee levels via public user profiles (batched) ──────────
-        // The company/employees endpoint doesn't include player level.
-        // We fetch levels separately using the torn/user endpoint with IDs.
         try {
+          document.getElementById('loadingMsg').textContent = '⏳ Loading employee levels...';
+          document.getElementById('loadingContainer').classList.remove('hidden');
           const empIds = Object.keys(data.company_employees).join(',');
           if (empIds) {
             const lvlResp = await fetch(
@@ -752,7 +757,6 @@
             if (lvlResp.ok) {
               const lvlData = await lvlResp.json();
               if (!lvlData.error) {
-                // If single employee, API returns the object directly (not wrapped by ID)
                 const isMulti = Object.keys(data.company_employees).length > 1;
                 for (const [eid, emp] of Object.entries(data.company_employees)) {
                   const profile = isMulti ? lvlData[eid] : lvlData;
@@ -762,20 +766,21 @@
             }
           }
         } catch (lvlErr) {
-          console.warn('[TCT] Could not fetch employee levels:', lvlErr);
+          // Level fetch failed silently — not critical
         }
-        // ─────────────────────────────────────────────────────────────────────
         document.getElementById('loginCard').classList.add('hidden');
         document.getElementById('welcomeCard').classList.remove('hidden');
         document.getElementById('refreshBtn').classList.remove('hidden');
         document.getElementById('settingsBtn').classList.remove('hidden');
+        document.getElementById('exportCsvBtn').style.display = 'flex';
+        document.getElementById('exportPdfBtn').style.display = 'flex';
         document.getElementById('userName').textContent = userData.name;
         const companyName = (data.company && data.company.name) || 'Your Company';
         document.getElementById('companyNameDisplay').textContent = companyName;
         displayCompanyData(data);
         const now = new Date();
         document.getElementById('syncInfo2').textContent = `✓ Last synced at ${now.toLocaleTimeString()}`;
- 
+
       } catch (error) {
         console.error('Full error:', error);
         let msg = error.message;
@@ -787,7 +792,7 @@
         document.getElementById('loadBtn').disabled = false;
       }
     }
- 
+
     function formatApiError(err) {
       const code = err.code || '';
       const raw  = err.error || 'Unknown API error';
@@ -802,7 +807,7 @@
       };
       return messages[code] ? `⚠️ ${messages[code]} (Code ${code})` : `⚠️ ${raw} (Code: ${code})`;
     }
- 
+
     function showSettings() {
       const disconnect = confirm('Do you want to disconnect and enter a different API key?');
       if (disconnect) {
@@ -812,19 +817,21 @@
         document.getElementById('apiKey').value = '';
         document.getElementById('refreshBtn').classList.add('hidden');
         document.getElementById('settingsBtn').classList.add('hidden');
+        document.getElementById('exportCsvBtn').style.display = 'none';
+        document.getElementById('exportPdfBtn').style.display = 'none';
         companyData = null; userData = null; currentApiKey = null;
       }
       toggleMenu();
     }
- 
+
     function showError(message) {
       document.getElementById('errorContainer').innerHTML = `<div class="card error">${message}</div>`;
     }
- 
+
     function toggleEmployeeDetails(id) {
       document.getElementById(`details-${id}`).classList.toggle('expanded');
     }
- 
+
     function toggleSection(bodyId, btnId) {
       const body = document.getElementById(bodyId);
       const btn  = document.getElementById(btnId);
@@ -839,7 +846,7 @@
         btn.textContent = '▼';
       }
     }
- 
+
     // ─── Scoring engine — real stat comparison ────────────────────────────────
     // Scores how well an employee fits a role based on actual recommended stats.
     // Strategy: for each stat the role cares about, calculate how close the
@@ -851,12 +858,12 @@
         { target: targets.int, actual: employee.intelligence  },
         { target: targets.end, actual: employee.endurance     }
       ].filter(c => c.target > 0);
- 
+
       if (checks.length === 0) return 0;
       const avg = checks.reduce((sum, c) => sum + Math.min(100, Math.round((c.actual / c.target) * 100)), 0) / checks.length;
       return Math.round(avg);
     }
- 
+
     // For display: show how far the employee is from each target stat
     function statGapSummary(employee, targets) {
       const parts = [];
@@ -874,10 +881,10 @@
       }
       return parts.join(' · ');
     }
- 
+
     // Low-value roles filled last
     const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
- 
+
     /**
      * Greedy optimal assignment:
      * 1. Separate roles into priority (valuable) and low-value buckets.
@@ -891,15 +898,15 @@
     function buildOptimalAssignment(companyType, employees) {
       const roles = COMPANY_ROLES[companyType];
       if (!roles) return null;
- 
+
       const empList = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
       const assigned  = new Map(); // empId → role
       const roleAssigned = new Map(); // role → employee
       const unassigned = new Set(empList.map(e => e.id));
- 
+
       const priorityRoles = Object.keys(roles).filter(r => !LOW_VALUE_ROLES.has(r));
       const lowValueRoles  = Object.keys(roles).filter(r =>  LOW_VALUE_ROLES.has(r));
- 
+
       // Helper: pick best unassigned employee for a given role weights
       function pickBest(weights, excludeIds = new Set()) {
         let best = null, bestScore = -1;
@@ -910,19 +917,19 @@
         }
         return best ? { emp: best, score: bestScore } : null;
       }
- 
+
       // Special handling: Manager → highest (INT + END); Marketer → 2nd highest
       const hasManager  = priorityRoles.includes('Manager')  || priorityRoles.includes('Store Manager') || priorityRoles.includes('Farm Manager') || priorityRoles.includes('Site Manager') || priorityRoles.includes('Warehouse Manager');
       const hasMarketer = priorityRoles.includes('Marketer') || priorityRoles.includes('Marketing Manager') || priorityRoles.includes('Advertising Manager');
- 
+
       const managerRoleKey  = priorityRoles.find(r => r.toLowerCase().includes('manager'));
       const marketerRoleKey = priorityRoles.find(r => r.toLowerCase().includes('market'));
- 
+
       // Sort employees by INT + END descending for leadership picks
       const byLeaderScore = [...empList].sort((a, b) =>
         (b.intelligence + b.endurance) - (a.intelligence + a.endurance)
       );
- 
+
       // Assign Manager
       if (managerRoleKey && unassigned.size > 0) {
         const pick = byLeaderScore.find(e => unassigned.has(e.id));
@@ -932,7 +939,7 @@
           roleAssigned.set(managerRoleKey, { emp: pick, score: scoreFit(pick, roles[managerRoleKey]) });
         }
       }
- 
+
       // Assign Marketer (2nd highest INT+END)
       if (marketerRoleKey && unassigned.size > 0) {
         const pick = byLeaderScore.find(e => unassigned.has(e.id));
@@ -942,7 +949,7 @@
           roleAssigned.set(marketerRoleKey, { emp: pick, score: scoreFit(pick, roles[marketerRoleKey]) });
         }
       }
- 
+
       // Assign remaining priority roles greedily
       for (const role of priorityRoles) {
         if (roleAssigned.has(role)) continue; // already assigned above
@@ -954,7 +961,7 @@
           roleAssigned.set(role, pick);
         }
       }
- 
+
       // Fill low-value roles with whoever remains
       for (const role of lowValueRoles) {
         if (unassigned.size === 0) break;
@@ -965,7 +972,7 @@
           roleAssigned.set(role, pick);
         }
       }
- 
+
       // Build result array ordered: priority roles first, then low-value
       const result = [];
       for (const role of [...priorityRoles, ...lowValueRoles]) {
@@ -983,12 +990,12 @@
           result.push({ role, employee: null, score: 0, currentRole: null, isMismatch: false, isLowValue: LOW_VALUE_ROLES.has(role) });
         }
       }
- 
+
       // Employees with no matching role slot
       const leftover = empList.filter(e => unassigned.has(e.id));
       return { assignments: result, unassigned: leftover };
     }
- 
+
     // ─── Torn company type ID → name map (sourced from Torn API forums) ───────
     const COMPANY_TYPE_MAP = {
       1:  "Hair Salon",
@@ -1032,7 +1039,7 @@
       39: "Detective Agency",
       40: "Logistics Management"
     };
- 
+
     // ─── Main display ─────────────────────────────────────────────────────────
     function displayCompanyData(data) {
       const container    = document.getElementById('dataContainer');
@@ -1041,25 +1048,19 @@
       const profile      = data.company;
       const employeeCount = Object.keys(employees).length;
       const companyName  = (profile && profile.name) || 'Your Company';
- 
+
       // Resolve company type: try name string first, fall back to numeric ID lookup
       const rawType = (profile && (profile.company_type_name || profile.company_type)) ||
                       (detailed && detailed.company_type) || '';
       const companyType = typeof rawType === 'number'
         ? (COMPANY_TYPE_MAP[rawType] || `Type ${rawType}`)
         : (rawType || '');
- 
-      // Debug: log raw API fields so we can trace any future mismatch
-      console.log('[TCT] Full company profile:', JSON.stringify(profile));
-      console.log('[TCT] Full company_detailed:', JSON.stringify(detailed));
-      console.log('[TCT] profile.company_type:', profile && profile.company_type,
-                  '| profile.company_type_name:', profile && profile.company_type_name,
-                  '| detailed.company_type:', detailed && detailed.company_type,
-                  '| resolved →', companyType);
- 
+
+      // Company type resolved — no debug logging in production
+
       const lastCustomers = (profile && profile.daily_customers != null) ? profile.daily_customers : null;
       const lastIncome    = (profile && profile.weekly_income   != null) ? profile.weekly_income   : null;
- 
+
       let html = `
         <div class="card">
           <div class="company-header">
@@ -1077,7 +1078,7 @@
           ${lastCustomers !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Customers</span><span class="stat-value">${lastCustomers.toLocaleString()}</span></div>` : ''}
           ${lastIncome    !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Income</span><span class="stat-value">$${lastIncome.toLocaleString()}</span></div>` : ''}
         </div>
- 
+
         <div class="card">
           <div class="section-header" onclick="toggleSection('employeesBody','employeesToggle')">
             <h2>📊 Employees (${employeeCount})</h2>
@@ -1086,19 +1087,21 @@
           <div class="collapsible-body" id="employeesBody" style="max-height: 9999px;">
             <div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0 4px;">💡 Tap any employee to see effectiveness breakdown</div>
       `;
- 
+
       Object.entries(employees)
         .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
         .forEach(([id, emp]) => {
           const eff       = emp.effectiveness?.total || 0;
           const effClass  = eff >= 70 ? 'high' : eff >= 40 ? 'medium' : 'low';
           const totalStats = emp.manual_labor + emp.intelligence + emp.endurance;
-          const statusClass = emp.last_action.status.toLowerCase();
+          const rawStatus = (emp.last_action.status || 'offline').toLowerCase().replace(/\s+/g, '');
+          const knownStatuses = new Set(['online','offline','idle','hospital','travelling','abroad']);
+          const statusClass = knownStatuses.has(rawStatus) ? rawStatus : 'offline';
           const eb          = emp.effectiveness || {};
           // level may come as emp.level or emp.revive_setting or be absent entirely
           const levelNum = emp.level || emp.employee_level || null;
           const level = levelNum ? `Lv ${levelNum}` : '';
- 
+
           html += `
             <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
               <div class="employee-header">
@@ -1134,9 +1137,9 @@
               </div>
             </div>`;
         });
- 
+
       html += `</div></div>`;
- 
+
       // ── Optimal Assignment ─────────────────────────────────────────────────
       const optResult = buildOptimalAssignment(companyType, employees);
       html += `
@@ -1146,22 +1149,22 @@
             <button class="collapse-btn" id="suggestionsToggle">▲</button>
           </div>
           <div class="collapsible-body" id="suggestionsBody" style="max-height: 9999px;">`;
- 
+
       if (!optResult) {
         html += `<div class="no-data-note" style="margin-top: 12px;">No role data available for <strong>${companyType || 'this company type'}</strong>.</div>`;
       } else {
         const moveCount = optResult.assignments.filter(a => a.employee && a.isMismatch && !a.isLowValue).length;
         html += `
           <div class="assign-intro">
-            Best employee→role assignment based on stat weights and leadership priority.
-            Manager &amp; Marketer go to your highest INT+END employees first.
-            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner</strong> roles are filled last as low-priority.` : ''}
+            Optimal assignment based on each employee's actual stats vs. recommended targets for each role.
+            Manager &amp; Marketer are reserved for your highest INT+END employees.
+            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner / Janitor</strong> roles are filled last — low priority for growth.` : ''}
           </div>
           <div class="assign-legend">
             <span><span class="dot dot-green"></span> Already in correct role</span>
             <span><span class="dot dot-amber"></span> Should move</span>
           </div>`;
- 
+
         optResult.assignments.forEach(({ role, employee, score, currentRole, isMismatch, isLowValue }) => {
           if (!employee) {
             html += `<div class="assign-card" style="opacity:0.5;border-left:4px solid #cbd5e1;">
@@ -1190,15 +1193,16 @@
             </div>
           </div>`;
         });
- 
+
         if (optResult.unassigned.length > 0) {
           html += `<div class="assign-unassigned">⚠️ No role slot for: ${optResult.unassigned.map(e => e.name).join(', ')} — more employees than defined roles.</div>`;
         }
- 
+
         if (moveCount > 0) {
           html += `<div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.1);border-radius:6px;font-size:12px;color:var(--text-secondary);">
             <strong style="color:#92400e;">⚠️ ${moveCount} role change${moveCount > 1 ? 's' : ''} suggested</strong> — reassigning these employees to their optimal roles should improve overall company effectiveness.
-          </div>`;
+          </div>
+          <button id="copyRolesBtn" onclick="copyRoleChanges()" style="margin-top:10px;padding:10px;font-size:13px;background:var(--border-color);color:var(--text-primary);border-radius:6px;width:100%;">📋 Copy Role Changes</button>`;
         } else {
           html += `<div style="margin-top:10px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:12px;color:#065f46;">
             <strong>✅ All employees are in their optimal roles!</strong>
@@ -1206,10 +1210,150 @@
         }
       }
       html += `</div></div>`;
- 
+
       container.innerHTML = html;
+    }
+
+    // ─── Export to CSV ────────────────────────────────────────────────────────
+    function exportCSV() {
+      if (!companyData) return;
+      toggleMenu();
+      const employees = companyData.company_employees;
+      const profile   = companyData.company;
+      const companyName = (profile && profile.name) || 'Company';
+      const rows = [
+        ['Name', 'Player ID', 'Position', 'Level', 'Manual', 'Intelligence', 'Endurance',
+         'Total Stats', 'Effectiveness %', 'Working Stats %', 'Settled In %', 'Merits %',
+         'Management %', 'Addiction %', 'Inactivity %', 'Wage/day', 'Days in Company', 'Status']
+      ];
+      Object.entries(employees)
+        .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
+        .forEach(([id, emp]) => {
+          const eb = emp.effectiveness || {};
+          rows.push([
+            emp.name, id, emp.position, emp.level || '',
+            emp.manual_labor, emp.intelligence, emp.endurance,
+            emp.manual_labor + emp.intelligence + emp.endurance,
+            eb.total || 0, eb.working_stats || 0, eb.settled_in || 0,
+            eb.merits || 0, eb.management || 0, eb.addiction || 0, eb.inactivity || 0,
+            emp.wage, emp.days_in_company, emp.last_action.status
+          ]);
+        });
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `${companyName.replace(/\s+/g, '_')}_employees_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ─── Export to PDF (print-to-PDF via browser print dialog) ───────────────
+    function exportPDF() {
+      if (!companyData) return;
+      toggleMenu();
+      const employees  = companyData.company_employees;
+      const profile    = companyData.company;
+      const detailed   = companyData.company_detailed;
+      const companyName = (profile && profile.name) || 'Company';
+      const rawType = (profile && (profile.company_type_name || profile.company_type)) ||
+                      (detailed && detailed.company_type) || '';
+      const companyType = typeof rawType === 'number' ? (COMPANY_TYPE_MAP[rawType] || '') : rawType;
+      const now = new Date().toLocaleString();
+
+      let rows = '';
+      Object.entries(employees)
+        .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
+        .forEach(([id, emp]) => {
+          const eb  = emp.effectiveness || {};
+          const eff = eb.total || 0;
+          const effColor = eff >= 70 ? '#15803d' : eff >= 40 ? '#92400e' : '#991b1b';
+          rows += `<tr>
+            <td>${emp.name}</td>
+            <td style="color:#64748b">[${id}]</td>
+            <td>${emp.position}</td>
+            <td>${emp.level || '—'}</td>
+            <td>${emp.manual_labor.toLocaleString()}</td>
+            <td>${emp.intelligence.toLocaleString()}</td>
+            <td>${emp.endurance.toLocaleString()}</td>
+            <td style="font-weight:700;color:${effColor}">${eff}%</td>
+            <td>$${emp.wage.toLocaleString()}</td>
+            <td>${emp.days_in_company}</td>
+            <td>${emp.last_action.status}</td>
+          </tr>`;
+        });
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>${companyName} — Employee Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 12px; color: #333; padding: 20px; }
+          h1 { font-size: 20px; margin-bottom: 4px; }
+          .meta { color: #64748b; margin-bottom: 16px; font-size: 11px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+          th { background: #667eea; color: white; padding: 8px 6px; text-align: left; font-size: 11px; }
+          td { padding: 7px 6px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .stats { margin-bottom: 16px; display: flex; gap: 24px; flex-wrap: wrap; }
+          .stat { background: #f1f5f9; padding: 8px 14px; border-radius: 6px; }
+          .stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; }
+          .stat-val { font-size: 16px; font-weight: 700; }
+          @media print { body { padding: 10px; } }
+        </style></head><body>
+        <h1>🏢 ${companyName}</h1>
+        <div class="meta">${companyType ? `${companyType} &nbsp;|&nbsp; ` : ''}Generated ${now}</div>
+        <div class="stats">
+          <div class="stat"><div class="stat-label">Efficiency</div><div class="stat-val">${detailed.efficiency}%</div></div>
+          <div class="stat"><div class="stat-label">Environment</div><div class="stat-val">${detailed.environment}%</div></div>
+          <div class="stat"><div class="stat-label">Employees</div><div class="stat-val">${Object.keys(employees).length} / ${detailed.upgrades.company_size}</div></div>
+          <div class="stat"><div class="stat-label">Company Funds</div><div class="stat-val">$${detailed.company_funds.toLocaleString()}</div></div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Name</th><th>ID</th><th>Position</th><th>Level</th>
+            <th>Manual</th><th>Intel</th><th>Endurance</th>
+            <th>Eff%</th><th>Wage</th><th>Days</th><th>Status</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;">
+          Torn Company Tracker — created by Shmomelette [4104345]
+        </div>
+        <script>window.onload = function(){ window.print(); }<\/script>
+        </body></html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url  = URL.createObjectURL(blob);
+      const win  = window.open(url, '_blank');
+      if (!win) showError('Pop-up blocked — please allow pop-ups for this page to export PDF.');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    // ─── Copy role changes to clipboard ───────────────────────────────────────
+    function copyRoleChanges() {
+      if (!companyData) return;
+      const profile  = companyData.company;
+      const detailed = companyData.company_detailed;
+      const rawType  = (profile && (profile.company_type_name || profile.company_type)) ||
+                       (detailed && detailed.company_type) || '';
+      const companyType = typeof rawType === 'number' ? (COMPANY_TYPE_MAP[rawType] || '') : rawType;
+      const result = buildOptimalAssignment(companyType, companyData.company_employees);
+      if (!result) return;
+
+      const moves = result.assignments.filter(a => a.employee && a.isMismatch && !a.isLowValue);
+      if (moves.length === 0) {
+        navigator.clipboard.writeText('✅ All employees are already in their optimal roles!');
+      } else {
+        const lines = [`📋 Suggested role changes for ${(profile && profile.name) || 'your company'}:\n`];
+        moves.forEach(({ employee, currentRole, role }) => {
+          lines.push(`• ${employee.name} [${employee.id}]: ${currentRole} → ${role}`);
+        });
+        navigator.clipboard.writeText(lines.join('\n'));
+      }
+      // Brief visual feedback
+      const btn = document.getElementById('copyRolesBtn');
+      if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => btn.textContent = '📋 Copy Role Changes', 2000); }
     }
   </script>
 </body>
 </html>
- 
