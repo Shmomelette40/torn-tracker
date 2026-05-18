@@ -957,78 +957,127 @@
     const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
 
     /**
-     * Employee-first assignment:
-     * Every employee is matched to their single best role based on stat fit.
-     * Multiple employees CAN share the same role — that's fine in Torn.
-     * Special rules:
-     *   - The employee with the highest INT+END gets the Manager role.
-     *   - The employee with the 2nd highest INT+END gets the Marketer role.
-     *   - All other employees get whichever priority role they score highest in.
-     *   - If their best role is a low-value one, flag it.
-     * Returns: array of { employee, suggestedRole, currentRole, score, isMismatch, isLowValue }
+     * Two-pass optimal assignment:
+     *
+     * PASS 1 — Role coverage (every role slot filled once):
+     *   - Leadership overrides: highest INT+END → Manager, 2nd highest → Marketer
+     *   - All other priority roles: greedily assign the best available employee
+     *   - Low-value roles: filled last with whoever remains
+     *   This guarantees every role in the company has at least one person.
+     *
+     * PASS 2 — Remaining employees (more staff than role slots):
+     *   - Each unassigned employee gets whichever role they score highest in
+     *   - Duplicates are fine — multiple people can share a role
+     *
+     * Returns: array of { employee, suggestedRole, currentRole, score, isMismatch, isLowValue, isOverflow }
      */
     function buildOptimalAssignment(companyType, employees) {
       const roles = COMPANY_ROLES[companyType];
       if (!roles) return null;
 
-      const empList = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
+      const empList      = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
       const priorityRoles = Object.keys(roles).filter(r => !LOW_VALUE_ROLES.has(r));
-      const allRoles      = Object.keys(roles);
+      const lowValueRoles = Object.keys(roles).filter(r =>  LOW_VALUE_ROLES.has(r));
+      const allRoles      = [...priorityRoles, ...lowValueRoles];
 
-      // Find manager and marketer role keys
       const managerRoleKey  = priorityRoles.find(r => r.toLowerCase().includes('manager'));
       const marketerRoleKey = priorityRoles.find(r => r.toLowerCase().includes('market'));
 
-      // Sort by INT+END for leadership assignment
+      // Sort by INT+END for leadership
       const byLeaderScore = [...empList].sort((a, b) =>
         (b.intelligence + b.endurance) - (a.intelligence + a.endurance)
       );
 
-      const forcedRoles = new Map(); // empId → forced role
-      if (managerRoleKey  && byLeaderScore[0]) forcedRoles.set(byLeaderScore[0].id, managerRoleKey);
-      if (marketerRoleKey && byLeaderScore[1]) forcedRoles.set(byLeaderScore[1].id, marketerRoleKey);
+      const unassigned  = new Set(empList.map(e => e.id));
+      const result      = [];
 
-      // For each employee find their best role
-      const result = empList.map(emp => {
-        // Leadership overrides
-        if (forcedRoles.has(emp.id)) {
-          const role = forcedRoles.get(emp.id);
-          return {
-            employee: emp,
-            suggestedRole: role,
-            currentRole: emp.position,
-            score: scoreFit(emp, roles[role]),
-            isMismatch: emp.position !== role,
-            isLowValue: LOW_VALUE_ROLES.has(role)
-          };
+      // Helper: best unassigned employee for a role
+      function pickBest(roleKey) {
+        let best = null, bestScore = -1;
+        for (const e of empList) {
+          if (!unassigned.has(e.id)) continue;
+          const s = scoreFit(e, roles[roleKey]);
+          if (s > bestScore) { bestScore = s; best = e; }
         }
+        return best ? { emp: best, score: bestScore } : null;
+      }
 
-        // Find best scoring role among priority roles first
+      // ── PASS 1: fill every role slot ───────────────────────────────────────
+
+      // Leadership overrides first
+      if (managerRoleKey && unassigned.size > 0) {
+        const pick = byLeaderScore.find(e => unassigned.has(e.id));
+        if (pick) {
+          unassigned.delete(pick.id);
+          result.push({ employee: pick, suggestedRole: managerRoleKey,
+            currentRole: pick.position, score: scoreFit(pick, roles[managerRoleKey]),
+            isMismatch: pick.position !== managerRoleKey,
+            isLowValue: false, isOverflow: false });
+        }
+      }
+      if (marketerRoleKey && unassigned.size > 0) {
+        const pick = byLeaderScore.find(e => unassigned.has(e.id));
+        if (pick) {
+          unassigned.delete(pick.id);
+          result.push({ employee: pick, suggestedRole: marketerRoleKey,
+            currentRole: pick.position, score: scoreFit(pick, roles[marketerRoleKey]),
+            isMismatch: pick.position !== marketerRoleKey,
+            isLowValue: false, isOverflow: false });
+        }
+      }
+
+      // Remaining priority roles
+      for (const role of priorityRoles) {
+        if (role === managerRoleKey || role === marketerRoleKey) continue;
+        if (unassigned.size === 0) break;
+        const pick = pickBest(role);
+        if (pick) {
+          unassigned.delete(pick.emp.id);
+          result.push({ employee: pick.emp, suggestedRole: role,
+            currentRole: pick.emp.position, score: pick.score,
+            isMismatch: pick.emp.position !== role,
+            isLowValue: false, isOverflow: false });
+        }
+      }
+
+      // Low-value roles
+      for (const role of lowValueRoles) {
+        if (unassigned.size === 0) break;
+        const pick = pickBest(role);
+        if (pick) {
+          unassigned.delete(pick.emp.id);
+          result.push({ employee: pick.emp, suggestedRole: role,
+            currentRole: pick.emp.position, score: pick.score,
+            isMismatch: pick.emp.position !== role,
+            isLowValue: true, isOverflow: false });
+        }
+      }
+
+      // ── PASS 2: assign remaining employees to their personal best role ─────
+      for (const e of empList) {
+        if (!unassigned.has(e.id)) continue;
         let bestRole = null, bestScore = -1;
         for (const role of priorityRoles) {
-          const s = scoreFit(emp, roles[role]);
+          const s = scoreFit(e, roles[role]);
           if (s > bestScore) { bestScore = s; bestRole = role; }
         }
-        // If no priority role beats 0, fall back to all roles
         if (bestScore <= 0) {
           for (const role of allRoles) {
-            const s = scoreFit(emp, roles[role]);
+            const s = scoreFit(e, roles[role]);
             if (s > bestScore) { bestScore = s; bestRole = role; }
           }
         }
+        unassigned.delete(e.id);
+        result.push({ employee: e, suggestedRole: bestRole || allRoles[0],
+          currentRole: e.position, score: bestScore,
+          isMismatch: e.position !== bestRole,
+          isLowValue: LOW_VALUE_ROLES.has(bestRole),
+          isOverflow: true }); // overflow = duplicate role assignment
+      }
 
-        return {
-          employee: emp,
-          suggestedRole: bestRole || allRoles[0],
-          currentRole: emp.position,
-          score: bestScore,
-          isMismatch: emp.position !== bestRole,
-          isLowValue: LOW_VALUE_ROLES.has(bestRole)
-        };
-      });
-
-      // Sort: mismatches first, then by score descending
+      // Sort: Pass 1 first (isOverflow=false), then mismatches, then score
       result.sort((a, b) => {
+        if (a.isOverflow !== b.isOverflow) return a.isOverflow ? 1 : -1;
         if (a.isMismatch !== b.isMismatch) return a.isMismatch ? -1 : 1;
         return b.score - a.score;
       });
@@ -1158,19 +1207,10 @@
 
     function deleteCustomField(id, fieldName, isGlobal, event) {
       event.stopPropagation();
-      if (isGlobal) {
-        // Remove from all employees
-        globalFields.delete(fieldName);
-        Object.keys(sessionData).forEach(eid => {
-          delete sessionData[eid].customFields[fieldName];
-        });
-        if (companyData) {
-          Object.keys(companyData.company_employees).forEach(eid => refreshEmpDetails(eid));
-        }
-      } else {
-        delete getEmpData(id).customFields[fieldName];
-        refreshEmpDetails(id);
-      }
+      // Always delete individually — global fields are removed per-employee only,
+      // not from all employees. "Save for All" creates it everywhere; delete is always local.
+      delete getEmpData(id).customFields[fieldName];
+      refreshEmpDetails(id);
     }
 
     // ── Refresh a single employee's expanded details panel ────────────────────
@@ -1416,16 +1456,25 @@
         const moveCount = optResult.assignments.filter(a => a.isMismatch && !a.isLowValue).length;
         html += `
           <div class="assign-intro">
-            Each employee matched to their best role based on actual stats vs. recommended targets.
-            Highest INT+END → Manager. Second highest → Marketer. Duplicates are fine — multiple employees can share a role.
-            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner / Janitor</strong> suggestions are low priority for growth.` : ''}
+            Every role is filled first by the best available employee (Pass 1). If you have more staff than roles, remaining employees are then matched to their personal best fit (Pass 2 — shown below the divider).
+            Manager &amp; Marketer → highest INT+END employees. Bookkeeper / Cleaner / Janitor filled last.
           </div>
           <div class="assign-legend">
             <span><span class="dot dot-green"></span> Already in best role</span>
             <span><span class="dot dot-amber"></span> Better role available</span>
           </div>`;
 
-        optResult.assignments.forEach(({ employee, suggestedRole, currentRole, score, isMismatch, isLowValue }) => {
+        let shownOverflowHeader = false;
+        optResult.assignments.forEach(({ employee, suggestedRole, currentRole, score, isMismatch, isLowValue, isOverflow }) => {
+          // Divider before overflow section
+          if (isOverflow && !shownOverflowHeader) {
+            shownOverflowHeader = true;
+            html += `<div style="margin: 14px 0 10px; display:flex; align-items:center; gap:8px;">
+              <div style="flex:1; height:1px; background:var(--border-color);"></div>
+              <span style="font-size:11px; color:var(--text-secondary); white-space:nowrap;">Additional staff — best personal fit</span>
+              <div style="flex:1; height:1px; background:var(--border-color);"></div>
+            </div>`;
+          }
           const cardClass = isMismatch ? 'mismatch' : 'ok';
           const changeClass = isMismatch ? 'move' : 'stay';
           const roles = COMPANY_ROLES[companyType];
@@ -1434,7 +1483,7 @@
             <div class="assign-left">
               <div class="assign-name">${employee.name} [${employee.id}]</div>
               <div class="assign-current" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Current: ${currentRole}</div>
-              <div class="assign-role" style="margin-top:5px;">→ ${suggestedRole}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}</div>
+              <div class="assign-role" style="margin-top:5px;">→ ${suggestedRole}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}${isOverflow ? ' <span style="font-size:10px;opacity:0.6;">(shared role)</span>' : ''}</div>
               <div class="assign-change ${changeClass}" style="margin-top:2px;">${isMismatch ? '⚠ Move suggested' : '✓ Already in best role'}</div>
               ${gap ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${gap} of target</div>` : ''}
             </div>
