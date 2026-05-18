@@ -886,114 +886,83 @@
     const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
 
     /**
-     * Greedy optimal assignment:
-     * 1. Separate roles into priority (valuable) and low-value buckets.
-     * 2. For priority roles, greedily assign the best unassigned employee.
-     *    - Manager role gets the employee with the highest (INT + END) sum.
-     *    - Marketer role gets the employee with the 2nd highest (INT + END) sum.
-     *    - All other priority roles: greedy stat-score match.
-     * 3. Remaining employees fill low-value roles.
-     * Returns: array of { role, employee, score, currentRole, isMismatch }
+     * Employee-first assignment:
+     * Every employee is matched to their single best role based on stat fit.
+     * Multiple employees CAN share the same role — that's fine in Torn.
+     * Special rules:
+     *   - The employee with the highest INT+END gets the Manager role.
+     *   - The employee with the 2nd highest INT+END gets the Marketer role.
+     *   - All other employees get whichever priority role they score highest in.
+     *   - If their best role is a low-value one, flag it.
+     * Returns: array of { employee, suggestedRole, currentRole, score, isMismatch, isLowValue }
      */
     function buildOptimalAssignment(companyType, employees) {
       const roles = COMPANY_ROLES[companyType];
       if (!roles) return null;
 
       const empList = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
-      const assigned  = new Map(); // empId → role
-      const roleAssigned = new Map(); // role → employee
-      const unassigned = new Set(empList.map(e => e.id));
-
       const priorityRoles = Object.keys(roles).filter(r => !LOW_VALUE_ROLES.has(r));
-      const lowValueRoles  = Object.keys(roles).filter(r =>  LOW_VALUE_ROLES.has(r));
+      const allRoles      = Object.keys(roles);
 
-      // Helper: pick best unassigned employee for a given role weights
-      function pickBest(weights, excludeIds = new Set()) {
-        let best = null, bestScore = -1;
-        for (const e of empList) {
-          if (!unassigned.has(e.id) || excludeIds.has(e.id)) continue;
-          const s = scoreFit(e, weights);
-          if (s > bestScore) { bestScore = s; best = e; }
-        }
-        return best ? { emp: best, score: bestScore } : null;
-      }
-
-      // Special handling: Manager → highest (INT + END); Marketer → 2nd highest
-      const hasManager  = priorityRoles.includes('Manager')  || priorityRoles.includes('Store Manager') || priorityRoles.includes('Farm Manager') || priorityRoles.includes('Site Manager') || priorityRoles.includes('Warehouse Manager');
-      const hasMarketer = priorityRoles.includes('Marketer') || priorityRoles.includes('Marketing Manager') || priorityRoles.includes('Advertising Manager');
-
+      // Find manager and marketer role keys
       const managerRoleKey  = priorityRoles.find(r => r.toLowerCase().includes('manager'));
       const marketerRoleKey = priorityRoles.find(r => r.toLowerCase().includes('market'));
 
-      // Sort employees by INT + END descending for leadership picks
+      // Sort by INT+END for leadership assignment
       const byLeaderScore = [...empList].sort((a, b) =>
         (b.intelligence + b.endurance) - (a.intelligence + a.endurance)
       );
 
-      // Assign Manager
-      if (managerRoleKey && unassigned.size > 0) {
-        const pick = byLeaderScore.find(e => unassigned.has(e.id));
-        if (pick) {
-          unassigned.delete(pick.id);
-          assigned.set(pick.id, managerRoleKey);
-          roleAssigned.set(managerRoleKey, { emp: pick, score: scoreFit(pick, roles[managerRoleKey]) });
-        }
-      }
+      const forcedRoles = new Map(); // empId → forced role
+      if (managerRoleKey  && byLeaderScore[0]) forcedRoles.set(byLeaderScore[0].id, managerRoleKey);
+      if (marketerRoleKey && byLeaderScore[1]) forcedRoles.set(byLeaderScore[1].id, marketerRoleKey);
 
-      // Assign Marketer (2nd highest INT+END)
-      if (marketerRoleKey && unassigned.size > 0) {
-        const pick = byLeaderScore.find(e => unassigned.has(e.id));
-        if (pick) {
-          unassigned.delete(pick.id);
-          assigned.set(pick.id, marketerRoleKey);
-          roleAssigned.set(marketerRoleKey, { emp: pick, score: scoreFit(pick, roles[marketerRoleKey]) });
-        }
-      }
-
-      // Assign remaining priority roles greedily
-      for (const role of priorityRoles) {
-        if (roleAssigned.has(role)) continue; // already assigned above
-        if (unassigned.size === 0) break;
-        const pick = pickBest(roles[role]);
-        if (pick) {
-          unassigned.delete(pick.emp.id);
-          assigned.set(pick.emp.id, role);
-          roleAssigned.set(role, pick);
-        }
-      }
-
-      // Fill low-value roles with whoever remains
-      for (const role of lowValueRoles) {
-        if (unassigned.size === 0) break;
-        const pick = pickBest(roles[role]);
-        if (pick) {
-          unassigned.delete(pick.emp.id);
-          assigned.set(pick.emp.id, role);
-          roleAssigned.set(role, pick);
-        }
-      }
-
-      // Build result array ordered: priority roles first, then low-value
-      const result = [];
-      for (const role of [...priorityRoles, ...lowValueRoles]) {
-        const entry = roleAssigned.get(role);
-        if (entry) {
-          result.push({
-            role,
-            employee: entry.emp,
-            score: entry.score,
-            currentRole: entry.emp.position,
-            isMismatch: entry.emp.position !== role,
+      // For each employee find their best role
+      const result = empList.map(emp => {
+        // Leadership overrides
+        if (forcedRoles.has(emp.id)) {
+          const role = forcedRoles.get(emp.id);
+          return {
+            employee: emp,
+            suggestedRole: role,
+            currentRole: emp.position,
+            score: scoreFit(emp, roles[role]),
+            isMismatch: emp.position !== role,
             isLowValue: LOW_VALUE_ROLES.has(role)
-          });
-        } else {
-          result.push({ role, employee: null, score: 0, currentRole: null, isMismatch: false, isLowValue: LOW_VALUE_ROLES.has(role) });
+          };
         }
-      }
 
-      // Employees with no matching role slot
-      const leftover = empList.filter(e => unassigned.has(e.id));
-      return { assignments: result, unassigned: leftover };
+        // Find best scoring role among priority roles first
+        let bestRole = null, bestScore = -1;
+        for (const role of priorityRoles) {
+          const s = scoreFit(emp, roles[role]);
+          if (s > bestScore) { bestScore = s; bestRole = role; }
+        }
+        // If no priority role beats 0, fall back to all roles
+        if (bestScore <= 0) {
+          for (const role of allRoles) {
+            const s = scoreFit(emp, roles[role]);
+            if (s > bestScore) { bestScore = s; bestRole = role; }
+          }
+        }
+
+        return {
+          employee: emp,
+          suggestedRole: bestRole || allRoles[0],
+          currentRole: emp.position,
+          score: bestScore,
+          isMismatch: emp.position !== bestRole,
+          isLowValue: LOW_VALUE_ROLES.has(bestRole)
+        };
+      });
+
+      // Sort: mismatches first, then by score descending
+      result.sort((a, b) => {
+        if (a.isMismatch !== b.isMismatch) return a.isMismatch ? -1 : 1;
+        return b.score - a.score;
+      });
+
+      return { assignments: result };
     }
 
     // ─── Torn company type ID → name map (sourced from Torn API forums) ───────
@@ -1061,11 +1030,20 @@
       const lastCustomers = (profile && profile.daily_customers != null) ? profile.daily_customers : null;
       const lastIncome    = (profile && profile.weekly_income   != null) ? profile.weekly_income   : null;
 
+      const companyId = (detailed && detailed.ID) || (profile && profile.ID) || '';
+      const companyLink = companyId
+        ? `https://www.torn.com/joblist.php#/p=corpinfo&ID=${companyId}`
+        : null;
+
       let html = `
         <div class="card">
           <div class="company-header">
             <div>
-              <div class="company-name">${companyName}</div>
+              <div class="company-name">
+                ${companyLink
+                  ? `<a href="${companyLink}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-color);text-decoration:none;" title="Open company on Torn">${companyName} 🔗</a>`
+                  : companyName}
+              </div>
               ${companyType ? `<div><span class="company-type-badge">🏷️ ${companyType}</span></div>` : ''}
             </div>
             <div class="company-rating">$${detailed.company_funds.toLocaleString()}</div>
@@ -1098,15 +1076,44 @@
           const knownStatuses = new Set(['online','offline','idle','hospital','travelling','abroad']);
           const statusClass = knownStatuses.has(rawStatus) ? rawStatus : 'offline';
           const eb          = emp.effectiveness || {};
-          // level may come as emp.level or emp.revive_setting or be absent entirely
           const levelNum = emp.level || emp.employee_level || null;
           const level = levelNum ? `Lv ${levelNum}` : '';
+
+          // ── Inactivity warning based on last_action.timestamp ──────────────
+          const lastActionTs = emp.last_action.timestamp || 0;
+          const hoursAgo = lastActionTs
+            ? Math.floor((Date.now() / 1000 - lastActionTs) / 3600)
+            : null;
+
+          let timeLabel = emp.last_action.relative; // fallback
+          if (hoursAgo !== null) {
+            if (hoursAgo < 1)       timeLabel = 'Just now';
+            else if (hoursAgo < 24) timeLabel = `${hoursAgo}h ago`;
+            else                    timeLabel = `${Math.floor(hoursAgo / 24)}d ${hoursAgo % 24}h ago`;
+          }
+
+          // Warning levels: 24h = yellow ⚠️, 48h = orange 🟠, 72h+ = red 🔴
+          let inactivityWarning = '';
+          let nameWarning = '';
+          const isOfflineStatus = ['offline','idle'].includes(rawStatus);
+          if (isOfflineStatus && hoursAgo !== null) {
+            if (hoursAgo >= 72) {
+              inactivityWarning = `<div style="margin-top:6px;padding:5px 8px;background:#fee2e2;border-radius:4px;font-size:11px;font-weight:600;color:#991b1b;">🔴 ${hoursAgo}h offline — firing recommended, inactivity penalty active</div>`;
+              nameWarning = ' 🔴';
+            } else if (hoursAgo >= 48) {
+              inactivityWarning = `<div style="margin-top:6px;padding:5px 8px;background:#ffedd5;border-radius:4px;font-size:11px;font-weight:600;color:#9a3412;">🟠 ${hoursAgo}h offline — inactivity penalty building</div>`;
+              nameWarning = ' 🟠';
+            } else if (hoursAgo >= 24) {
+              inactivityWarning = `<div style="margin-top:6px;padding:5px 8px;background:#fef9c3;border-radius:4px;font-size:11px;font-weight:600;color:#854d0e;">⚠️ ${hoursAgo}h offline — watch this employee</div>`;
+              nameWarning = ' ⚠️';
+            }
+          }
 
           html += `
             <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
               <div class="employee-header">
                 <div>
-                  <div class="employee-name">${emp.name} [${id}]</div>
+                  <div class="employee-name">${emp.name} [${id}]${nameWarning}</div>
                   <div class="employee-meta">
                     <span class="employee-position">${emp.position}</span>
                     ${level ? `<span class="level-badge">${level}</span>` : ''}
@@ -1122,7 +1129,8 @@
               <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
                 Total Stats: ${totalStats.toLocaleString()} • Wage: $${emp.wage.toLocaleString()}/day • Days: ${emp.days_in_company}
               </div>
-              <span class="status-badge ${statusClass}">${emp.last_action.status} • ${emp.last_action.relative}</span>
+              <span class="status-badge ${statusClass}">${emp.last_action.status} • ${timeLabel}</span>
+              ${inactivityWarning}
               <div class="employee-details" id="details-${id}">
                 <h3 style="font-size: 14px; color: var(--accent-color); margin-bottom: 8px;">Effectiveness Breakdown</h3>
                 <div class="eff-breakdown">
@@ -1153,38 +1161,29 @@
       if (!optResult) {
         html += `<div class="no-data-note" style="margin-top: 12px;">No role data available for <strong>${companyType || 'this company type'}</strong>.</div>`;
       } else {
-        const moveCount = optResult.assignments.filter(a => a.employee && a.isMismatch && !a.isLowValue).length;
+        const moveCount = optResult.assignments.filter(a => a.isMismatch && !a.isLowValue).length;
         html += `
           <div class="assign-intro">
-            Optimal assignment based on each employee's actual stats vs. recommended targets for each role.
-            Manager &amp; Marketer are reserved for your highest INT+END employees.
-            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner / Janitor</strong> roles are filled last — low priority for growth.` : ''}
+            Each employee matched to their best role based on actual stats vs. recommended targets.
+            Highest INT+END → Manager. Second highest → Marketer. Duplicates are fine — multiple employees can share a role.
+            ${LOW_VALUE_ROLES.size ? `<strong>Bookkeeper / Cleaner / Janitor</strong> suggestions are low priority for growth.` : ''}
           </div>
           <div class="assign-legend">
-            <span><span class="dot dot-green"></span> Already in correct role</span>
-            <span><span class="dot dot-amber"></span> Should move</span>
+            <span><span class="dot dot-green"></span> Already in best role</span>
+            <span><span class="dot dot-amber"></span> Better role available</span>
           </div>`;
 
-        optResult.assignments.forEach(({ role, employee, score, currentRole, isMismatch, isLowValue }) => {
-          if (!employee) {
-            html += `<div class="assign-card" style="opacity:0.5;border-left:4px solid #cbd5e1;">
-              <div class="assign-left">
-                <div class="assign-role">${role}</div>
-                <div class="assign-name" style="color:var(--text-secondary);">— No employee available —</div>
-              </div>
-            </div>`;
-            return;
-          }
+        optResult.assignments.forEach(({ employee, suggestedRole, currentRole, score, isMismatch, isLowValue }) => {
           const cardClass = isMismatch ? 'mismatch' : 'ok';
           const changeClass = isMismatch ? 'move' : 'stay';
           const roles = COMPANY_ROLES[companyType];
-          const gap = roles ? statGapSummary(employee, roles[role]) : '';
-          html += `<div class="assign-card ${cardClass}${isLowValue ? '" style="opacity:0.7' : ''}">
+          const gap = roles && suggestedRole ? statGapSummary(employee, roles[suggestedRole]) : '';
+          html += `<div class="assign-card ${cardClass}${isLowValue ? '" style="opacity:0.75' : ''}">
             <div class="assign-left">
               <div class="assign-name">${employee.name} [${employee.id}]</div>
               <div class="assign-current" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Current: ${currentRole}</div>
-              <div class="assign-role" style="margin-top:5px;">→ ${role}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}</div>
-              <div class="assign-change ${changeClass}" style="margin-top:2px;">${isMismatch ? '⚠ Move suggested' : '✓ Already in role'}</div>
+              <div class="assign-role" style="margin-top:5px;">→ ${suggestedRole}${isLowValue ? ' <span style="font-size:10px;opacity:0.7;">(low priority)</span>' : ''}</div>
+              <div class="assign-change ${changeClass}" style="margin-top:2px;">${isMismatch ? '⚠ Move suggested' : '✓ Already in best role'}</div>
               ${gap ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${gap} of target</div>` : ''}
             </div>
             <div class="assign-right">
@@ -1194,13 +1193,9 @@
           </div>`;
         });
 
-        if (optResult.unassigned.length > 0) {
-          html += `<div class="assign-unassigned">⚠️ No role slot for: ${optResult.unassigned.map(e => e.name).join(', ')} — more employees than defined roles.</div>`;
-        }
-
         if (moveCount > 0) {
           html += `<div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.1);border-radius:6px;font-size:12px;color:var(--text-secondary);">
-            <strong style="color:#92400e;">⚠️ ${moveCount} role change${moveCount > 1 ? 's' : ''} suggested</strong> — reassigning these employees to their optimal roles should improve overall company effectiveness.
+            <strong style="color:#92400e;">⚠️ ${moveCount} role change${moveCount > 1 ? 's' : ''} suggested</strong> — moving these employees to their best-fit roles should improve overall effectiveness.
           </div>
           <button id="copyRolesBtn" onclick="copyRoleChanges()" style="margin-top:10px;padding:10px;font-size:13px;background:var(--border-color);color:var(--text-primary);border-radius:6px;width:100%;">📋 Copy Role Changes</button>`;
         } else {
@@ -1340,13 +1335,13 @@
       const result = buildOptimalAssignment(companyType, companyData.company_employees);
       if (!result) return;
 
-      const moves = result.assignments.filter(a => a.employee && a.isMismatch && !a.isLowValue);
+      const moves = result.assignments.filter(a => a.isMismatch && !a.isLowValue);
       if (moves.length === 0) {
         navigator.clipboard.writeText('✅ All employees are already in their optimal roles!');
       } else {
         const lines = [`📋 Suggested role changes for ${(profile && profile.name) || 'your company'}:\n`];
-        moves.forEach(({ employee, currentRole, role }) => {
-          lines.push(`• ${employee.name} [${employee.id}]: ${currentRole} → ${role}`);
+        moves.forEach(({ employee, currentRole, suggestedRole }) => {
+          lines.push(`• ${employee.name} [${employee.id}]: ${currentRole} → ${suggestedRole}`);
         });
         navigator.clipboard.writeText(lines.join('\n'));
       }
