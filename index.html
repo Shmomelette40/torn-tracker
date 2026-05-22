@@ -228,6 +228,33 @@
       padding: 8px 12px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border-color);
       cursor: pointer; background: none; color: var(--text-secondary); width: auto;
     }
+    /* ── Star ranking card ── */
+    .star-rank-card { border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; border: 2px solid var(--border-color); }
+    .star-rank-card.gain  { border-color: #10b981; background: rgba(16,185,129,0.06); }
+    .star-rank-card.hold  { border-color: #667eea; background: rgba(102,126,234,0.06); }
+    .star-rank-card.risk  { border-color: #f59e0b; background: rgba(245,158,11,0.06); }
+    .star-rank-card.drop  { border-color: #ef4444; background: rgba(239,68,68,0.06); }
+    .star-verdict { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .star-verdict.gain  { color: #10b981; }
+    .star-verdict.hold  { color: var(--accent-color); }
+    .star-verdict.risk  { color: #f59e0b; }
+    .star-verdict.drop  { color: #ef4444; }
+    .star-sub  { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
+    .star-bar-wrap { margin: 8px 0 4px; }
+    .star-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .star-bar-track { height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; }
+    .star-bar-fill  { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .star-bar-fill.gain { background: #10b981; }
+    .star-bar-fill.hold { background: var(--accent-color); }
+    .star-bar-fill.risk { background: #f59e0b; }
+    .star-bar-fill.drop { background: #ef4444; }
+    .star-context-table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 12px; }
+    .star-context-table th { text-align: left; color: var(--text-secondary); font-size: 10px; text-transform: uppercase; padding: 4px 6px; border-bottom: 1px solid var(--border-color); }
+    .star-context-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .star-context-table tr.highlight td { font-weight: 700; color: var(--accent-color); background: rgba(102,126,234,0.07); }
+    .star-context-table tr:last-child td { border-bottom: none; }
+    .star-caveat { margin-top: 10px; font-size: 11px; color: var(--text-secondary); padding: 8px 10px; background: var(--border-color); border-radius: 6px; line-height: 1.6; }
+    .star-loading { text-align: center; padding: 20px 0; font-size: 13px; color: var(--text-secondary); }
     .eff-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
     .eff-item { background: var(--border-color); padding: 8px; border-radius: 4px; font-size: 12px; }
     .eff-label { color: var(--text-secondary); font-size: 10px; text-transform: uppercase; }
@@ -308,28 +335,28 @@
         </div>
       </div>
     </div>
- 
+
     <div class="card" id="loginCard">
       <h2>Connect Your Company</h2>
- 
+
       <!-- Saved session banner (shown if a remembered key exists) -->
       <div id="savedSessionBanner" style="display:none" class="saved-session-banner">
         <span>🔑 <span id="savedSessionName">Saved session found</span> — tap to reconnect</span>
         <button onclick="clearSavedSession()">Forget</button>
       </div>
- 
+
       <div class="input-group">
         <label for="apiKey">Torn API Key <span class="info-icon" onclick="showApiInfo()">?</span></label>
         <input type="text" id="apiKey" placeholder="Enter your 16-character API key" autocomplete="off">
         <div class="disclaimer">⚠️ <strong>Preview Version:</strong> Data is not saved between sessions. Historical tracking, stat growth charts, and persistent data are coming in the full platform.</div>
       </div>
- 
+
       <!-- Remember Me -->
       <div class="remember-row">
         <input type="checkbox" id="rememberMe">
         <label for="rememberMe">Remember me on this device <span style="font-size:11px;opacity:0.6;">(stores key in browser localStorage)</span></label>
       </div>
- 
+
       <!-- T&C Agreement -->
       <div style="margin: 14px 0 16px;">
         <div class="check-row">
@@ -341,7 +368,7 @@
             <a onclick="toggleLegalPanel('tornTosPanel', event)">Torn API Terms of Service</a>
           </label>
         </div>
- 
+
         <!-- Torn Company Tracker T&C panel -->
         <div class="legal-panel" id="tosPanel">
           <h3>📄 Torn Company Tracker — Terms of Service &amp; Privacy Policy</h3>
@@ -361,7 +388,7 @@
           <p><strong>Future paid tiers.</strong> When a backend is introduced, data will be stored server-side only for paying users who explicitly opt in. A full updated T&amp;C will be presented at that time. Payment will be in-game currency only — no real money is ever collected.</p>
           <p>Created and managed by <strong>Shmomelette [4104345]</strong>. Contact via Torn profile for questions.</p>
         </div>
- 
+
         <!-- Torn API T&C panel -->
         <div class="legal-panel" id="tornTosPanel">
           <h3>⚙️ Torn API — Terms of Service (Summary)</h3>
@@ -373,10 +400,10 @@
           <p><strong>Access levels:</strong> Limited Access is sufficient. Full Access is not required or requested.</p>
         </div>
       </div>
- 
+
       <button id="loadBtn" onclick="loadCompanyData()" disabled style="opacity:0.5">Load Company Data</button>
     </div>
- 
+
     <div class="card hidden" id="welcomeCard">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -386,19 +413,19 @@
       </div>
       <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"><span id="syncInfo2"></span></div>
     </div>
- 
+
     <div id="errorContainer"></div>
     <div id="loadingContainer" class="hidden">
       <div class="card"><div class="loading" id="loadingMsg">⏳ Loading company data...</div></div>
     </div>
     <div id="dataContainer"></div>
- 
+
     <div class="footer">
       <div>Created and managed by <strong>Shmomelette [4104345]</strong></div>
       <div style="margin-top: 8px;"><a href="https://ko-fi.com/shmomelette" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a></div>
     </div>
   </div>
- 
+
   <div id="apiModal" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="closeModal('apiModal')">&times;</span>
@@ -407,7 +434,7 @@
       <p style="margin-top: 12px; color: var(--text-secondary); line-height: 1.6;">Generate an API key in:<br><strong>Torn → Settings → API</strong></p>
     </div>
   </div>
- 
+
   <div id="termsModal" class="modal">
     <div class="modal-content" style="max-width: 520px; max-height: 80vh; overflow-y: auto;">
       <span class="close-modal" onclick="closeModal('termsModal')">&times;</span>
@@ -433,10 +460,10 @@
       </div>
     </div>
   </div>
- 
+
   <script>
     let companyData = null, userData = null, currentApiKey = null;
- 
+
     // ─── COMPANY ROLE DATA — real recommended stats from Torn wiki ───────────
     // Each role: { man: primary, int: primary, end: primary, man2: secondary, int2: secondary, end2: secondary }
     // Primary stat = first number in "X STAT / Y STAT2", secondary = second number.
@@ -835,7 +862,7 @@
         "Cashier":       { man: 0,     int: 14500,  end: 29000 }
       }
     };
- 
+
     // ─── Dark mode ────────────────────────────────────────────────────────────
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
@@ -848,7 +875,7 @@
       document.body.classList.add('dark-mode');
       document.getElementById('darkModeIcon').textContent = '☀️';
     }
- 
+
     function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
     window.onclick = function(event) {
       if (!event.target.matches('.menu-btn')) {
@@ -859,14 +886,14 @@
     function showApiInfo() { document.getElementById('apiModal').style.display = 'block'; }
     function showApiTerms() { document.getElementById('termsModal').style.display = 'block'; toggleMenu(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
- 
+
     // ─── Inline legal panels ──────────────────────────────────────────────────
     function toggleLegalPanel(panelId, event) {
       if (event) event.preventDefault();
       const panel = document.getElementById(panelId);
       panel.classList.toggle('open');
     }
- 
+
     // ─── T&C checkbox — gates the Load button ────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
       const tosCheck = document.getElementById('tosAgree');
@@ -879,14 +906,14 @@
       }
       initRememberMe();
     });
- 
+
     // ─── Remember Me / Session token ─────────────────────────────────────────
     // We store the API key in localStorage under 'tct_session'.
     // On load, if a saved key exists, we pre-fill the input and show the banner.
     // The session token is cleared if the user clicks "Forget" or disconnects.
     const SESSION_KEY = 'tct_session';
     const SESSION_NAME_KEY = 'tct_session_name';
- 
+
     function initRememberMe() {
       const saved = localStorage.getItem(SESSION_KEY);
       const savedName = localStorage.getItem(SESSION_NAME_KEY);
@@ -901,7 +928,7 @@
         }
       }
     }
- 
+
     function saveSessionIfRemember(apiKey, playerName) {
       if (document.getElementById('rememberMe').checked) {
         localStorage.setItem(SESSION_KEY, apiKey);
@@ -912,7 +939,7 @@
         localStorage.removeItem(SESSION_NAME_KEY);
       }
     }
- 
+
     function clearSavedSession() {
       localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem(SESSION_NAME_KEY);
@@ -920,7 +947,7 @@
       document.getElementById('apiKey').value = '';
       document.getElementById('rememberMe').checked = false;
     }
- 
+
     // ─── Corporate API retry queue ────────────────────────────────────────────
     // Used when firing multiple director API keys simultaneously (corporate tier).
     // If Torn returns error 5 (rate limit) or 8 (IP block) or 17 (backend error),
@@ -954,7 +981,7 @@
         }
       }
     }
- 
+
     // ─── Load / Refresh ───────────────────────────────────────────────────────
     async function loadCompanyData() {
       const tosCheck = document.getElementById('tosAgree');
@@ -967,19 +994,19 @@
       if (apiKey.length !== 16) { showError('API key should be 16 characters long'); return; }
       await fetchCompanyData(apiKey);
     }
- 
+
     async function refreshData() {
       if (!currentApiKey) { showError('No API key stored. Please reconnect.'); return; }
       toggleMenu();
       await fetchCompanyData(currentApiKey);
     }
- 
+
     async function fetchCompanyData(apiKey) {
       document.getElementById('errorContainer').innerHTML = '';
       document.getElementById('dataContainer').innerHTML = '';
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadBtn').disabled = true;
- 
+
       try {
         const userResponse = await fetch(
           `https://api.torn.com/user/?selections=basic&key=${apiKey}`,
@@ -988,12 +1015,12 @@
         if (!userResponse.ok) throw new Error(`HTTP error! status: ${userResponse.status}`);
         const userDataRaw = await userResponse.json();
         if (userDataRaw.error) throw new Error(formatApiError(userDataRaw.error));
- 
+
         userData = userDataRaw;
         currentApiKey = apiKey;
         // Save session if Remember Me is checked
         saveSessionIfRemember(apiKey, userDataRaw.name);
- 
+
         const response = await fetch(
           `https://api.torn.com/company/?selections=detailed,employees,profile&key=${apiKey}`,
           { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
@@ -1001,7 +1028,7 @@
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(formatApiError(data.error));
- 
+
         const companyInfo = data.company || data.company_detailed;
         if (companyInfo.director !== userData.player_id) {
           throw new Error(
@@ -1009,9 +1036,9 @@
             'If you are a director, make sure you are using the API key linked to your director account.'
           );
         }
- 
+
         companyData = data;
- 
+
         // ── Fetch employee levels via public user profiles (batched) ──────────
         try {
           document.getElementById('loadingMsg').textContent = '⏳ Loading employee levels...';
@@ -1048,7 +1075,7 @@
         displayCompanyData(data);
         const now = new Date();
         document.getElementById('syncInfo2').textContent = `✓ Last synced at ${now.toLocaleTimeString()}`;
- 
+
       } catch (error) {
         console.error('Full error:', error);
         let msg = error.message;
@@ -1066,7 +1093,7 @@
         }
       }
     }
- 
+
     function formatApiError(err) {
       const code = err.code || '';
       const raw  = err.error || 'Unknown API error';
@@ -1081,7 +1108,7 @@
       };
       return messages[code] ? `⚠️ ${messages[code]} (Code ${code})` : `⚠️ ${raw} (Code: ${code})`;
     }
- 
+
     function showSettings() {
       const disconnect = confirm('Do you want to disconnect and enter a different API key?');
       if (disconnect) {
@@ -1106,11 +1133,11 @@
       }
       toggleMenu();
     }
- 
+
     function showError(message) {
       document.getElementById('errorContainer').innerHTML = `<div class="card error">${message}</div>`;
     }
- 
+
     function toggleEmployeeDetails(id) {
       const detailsEl = document.getElementById(`details-${id}`);
       detailsEl.classList.toggle('expanded');
@@ -1123,7 +1150,7 @@
         refreshEmpDetails(id);
       }
     }
- 
+
     function toggleSection(bodyId, btnId) {
       const body = document.getElementById(bodyId);
       const btn  = document.getElementById(btnId);
@@ -1138,7 +1165,7 @@
         btn.textContent = '▼';
       }
     }
- 
+
     // ─── Scoring engine — real stat comparison ────────────────────────────────
     // Scores how well an employee fits a role based on actual recommended stats.
     // Strategy: for each stat the role cares about, calculate how close the
@@ -1150,12 +1177,12 @@
         { target: targets.int, actual: employee.intelligence  },
         { target: targets.end, actual: employee.endurance     }
       ].filter(c => c.target > 0);
- 
+
       if (checks.length === 0) return 0;
       const avg = checks.reduce((sum, c) => sum + Math.min(100, Math.round((c.actual / c.target) * 100)), 0) / checks.length;
       return Math.round(avg);
     }
- 
+
     // For display: show how far the employee is from each target stat
     function statGapSummary(employee, targets) {
       const parts = [];
@@ -1173,10 +1200,10 @@
       }
       return parts.join(' · ');
     }
- 
+
     // Low-value roles filled last
     const LOW_VALUE_ROLES = new Set(['Bookkeeper', 'Cleaner', 'Janitor']);
- 
+
     /**
      * Two-pass optimal assignment:
      *
@@ -1195,23 +1222,23 @@
     function buildOptimalAssignment(companyType, employees) {
       const roles = COMPANY_ROLES[companyType];
       if (!roles) return null;
- 
+
       const empList      = Object.entries(employees).map(([id, e]) => ({ id, ...e }));
       const priorityRoles = Object.keys(roles).filter(r => !LOW_VALUE_ROLES.has(r));
       const lowValueRoles = Object.keys(roles).filter(r =>  LOW_VALUE_ROLES.has(r));
       const allRoles      = [...priorityRoles, ...lowValueRoles];
- 
+
       const managerRoleKey  = priorityRoles.find(r => r.toLowerCase().includes('manager'));
       const marketerRoleKey = priorityRoles.find(r => r.toLowerCase().includes('market'));
- 
+
       // Sort by INT+END for leadership
       const byLeaderScore = [...empList].sort((a, b) =>
         (b.intelligence + b.endurance) - (a.intelligence + a.endurance)
       );
- 
+
       const unassigned  = new Set(empList.map(e => e.id));
       const result      = [];
- 
+
       // Helper: best unassigned employee for a role
       function pickBest(roleKey) {
         let best = null, bestScore = -1;
@@ -1222,9 +1249,9 @@
         }
         return best ? { emp: best, score: bestScore } : null;
       }
- 
+
       // ── PASS 1: fill every role slot ───────────────────────────────────────
- 
+
       // Leadership overrides first
       if (managerRoleKey && unassigned.size > 0) {
         const pick = byLeaderScore.find(e => unassigned.has(e.id));
@@ -1246,7 +1273,7 @@
             isLowValue: false, isOverflow: false });
         }
       }
- 
+
       // Remaining priority roles
       for (const role of priorityRoles) {
         if (role === managerRoleKey || role === marketerRoleKey) continue;
@@ -1260,7 +1287,7 @@
             isLowValue: false, isOverflow: false });
         }
       }
- 
+
       // Low-value roles
       for (const role of lowValueRoles) {
         if (unassigned.size === 0) break;
@@ -1273,7 +1300,7 @@
             isLowValue: true, isOverflow: false });
         }
       }
- 
+
       // ── PASS 2: assign remaining employees to their personal best role ─────
       for (const e of empList) {
         if (!unassigned.has(e.id)) continue;
@@ -1295,17 +1322,17 @@
           isLowValue: LOW_VALUE_ROLES.has(bestRole),
           isOverflow: true }); // overflow = duplicate role assignment
       }
- 
+
       // Sort: Pass 1 first (isOverflow=false), then mismatches, then score
       result.sort((a, b) => {
         if (a.isOverflow !== b.isOverflow) return a.isOverflow ? 1 : -1;
         if (a.isMismatch !== b.isMismatch) return a.isMismatch ? -1 : 1;
         return b.score - a.score;
       });
- 
+
       return { assignments: result };
     }
- 
+
     // ─── Torn company type ID → name map (sourced from Torn API forums) ───────
     const COMPANY_TYPE_MAP = {
       1:  "Hair Salon",
@@ -1349,18 +1376,18 @@
       39: "Detective Agency",
       40: "Logistics Management"
     };
- 
+
     // ─── Session data store (replaced by backend later) ──────────────────────
     // Structure: { [employeeId]: { trains, lastTrained, customFields: {name: value} } }
     // globalFields: field names that apply to all employees
     const sessionData = {};
     const globalFields = new Set();
- 
+
     function getEmpData(id) {
       if (!sessionData[id]) sessionData[id] = { trains: 0, lastTrained: null, customFields: {} };
       return sessionData[id];
     }
- 
+
     // ── Trains ────────────────────────────────────────────────────────────────
     function adjustTrains(id, delta, event) {
       event.stopPropagation();
@@ -1369,7 +1396,7 @@
       if (delta > 0) d.lastTrained = Date.now();
       refreshEmpDetails(id);
     }
- 
+
     // ── Custom fields ─────────────────────────────────────────────────────────
     function showAddFieldForm(id, event) {
       event.stopPropagation();
@@ -1377,7 +1404,7 @@
       document.getElementById(`add-field-btn-${id}`).style.display = 'none';
       document.getElementById(`field-name-input-${id}`).focus();
     }
- 
+
     function hideAddFieldForm(id, event) {
       if (event) event.stopPropagation();
       document.getElementById(`add-field-form-${id}`).style.display = 'none';
@@ -1385,7 +1412,7 @@
       document.getElementById(`field-name-input-${id}`).value = '';
       document.getElementById(`field-value-input-${id}`).value = '';
     }
- 
+
     function saveCustomField(id, forAll, event) {
       event.stopPropagation();
       const nameEl  = document.getElementById(`field-name-input-${id}`);
@@ -1393,7 +1420,7 @@
       const name  = nameEl.value.trim();
       const value = valueEl.value.trim();
       if (!name) { nameEl.focus(); return; }
- 
+
       if (forAll) {
         // Add to global field registry and all existing employees
         globalFields.add(name);
@@ -1420,12 +1447,12 @@
       }
       hideAddFieldForm(id, null);
     }
- 
+
     function updateCustomField(id, fieldName, value, event) {
       if (event) event.stopPropagation();
       getEmpData(id).customFields[fieldName] = value;
     }
- 
+
     function deleteCustomField(id, fieldName, isGlobal, event) {
       event.stopPropagation();
       // Always delete individually — global fields are removed per-employee only,
@@ -1433,7 +1460,7 @@
       delete getEmpData(id).customFields[fieldName];
       refreshEmpDetails(id);
     }
- 
+
     // ── Refresh a single employee's expanded details panel ────────────────────
     function refreshEmpDetails(id) {
       const detailsEl = document.getElementById(`details-${id}`);
@@ -1442,12 +1469,12 @@
       const lastEl   = document.getElementById(`trains-last-${id}`);
       const fieldsEl = document.getElementById(`custom-fields-${id}`);
       if (!trainsEl) return;
- 
+
       const d = getEmpData(id);
- 
+
       // Update trains count
       trainsEl.textContent = d.trains || 0;
- 
+
       // Update last trained label
       if (lastEl) {
         if (d.lastTrained) {
@@ -1459,14 +1486,14 @@
           lastEl.textContent = 'Not yet trained this session';
         }
       }
- 
+
       // Rebuild custom fields
       if (fieldsEl) {
         // Merge global fields into this employee's data
         globalFields.forEach(name => {
           if (!(name in d.customFields)) d.customFields[name] = '';
         });
- 
+
         const allFields = Object.entries(d.customFields);
         if (allFields.length === 0) {
           fieldsEl.innerHTML = '';
@@ -1486,7 +1513,7 @@
         }).join('');
       }
     }
- 
+
     // ─── Main display ─────────────────────────────────────────────────────────
     function displayCompanyData(data) {
       const container    = document.getElementById('dataContainer');
@@ -1495,24 +1522,24 @@
       const profile      = data.company;
       const employeeCount = Object.keys(employees).length;
       const companyName  = (profile && profile.name) || 'Your Company';
- 
+
       // Resolve company type: try name string first, fall back to numeric ID lookup
       const rawType = (profile && (profile.company_type_name || profile.company_type)) ||
                       (detailed && detailed.company_type) || '';
       const companyType = typeof rawType === 'number'
         ? (COMPANY_TYPE_MAP[rawType] || `Type ${rawType}`)
         : (rawType || '');
- 
+
       // Company type resolved — no debug logging in production
- 
+
       const lastCustomers = (profile && profile.daily_customers != null) ? profile.daily_customers : null;
       const lastIncome    = (profile && profile.weekly_income   != null) ? profile.weekly_income   : null;
- 
+
       const companyId = (detailed && detailed.ID) || (profile && profile.ID) || '';
       const companyLink = companyId
         ? `https://www.torn.com/joblist.php#/p=corpinfo&ID=${companyId}`
         : null;
- 
+
       let html = `
         <div class="card">
           <div class="company-header">
@@ -1534,7 +1561,17 @@
           ${lastCustomers !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Customers</span><span class="stat-value">${lastCustomers.toLocaleString()}</span></div>` : ''}
           ${lastIncome    !== null ? `<div class="stat-row"><span class="stat-label">Last Recorded Income</span><span class="stat-value">$${lastIncome.toLocaleString()}</span></div>` : ''}
         </div>
- 
+
+        <div class="card" id="starRankingCard">
+          <div class="section-header" onclick="toggleSection('starRankingBody','starRankingToggle')">
+            <h2>⭐ Sunday Star Projection</h2>
+            <button class="collapse-btn" id="starRankingToggle">▲</button>
+          </div>
+          <div class="collapsible-body" id="starRankingBody" style="max-height: 9999px;">
+            <div class="star-loading">⏳ Loading company rankings…</div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="section-header" onclick="toggleSection('employeesBody','employeesToggle')">
             <h2>📊 Employees (${employeeCount})</h2>
@@ -1543,7 +1580,7 @@
           <div class="collapsible-body" id="employeesBody" style="max-height: 9999px;">
             <div style="font-size: 12px; color: var(--text-secondary); margin: 12px 0 4px;">💡 Tap any employee to see effectiveness breakdown</div>
       `;
- 
+
       Object.entries(employees)
         .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
         .forEach(([id, emp]) => {
@@ -1556,20 +1593,20 @@
           const eb          = emp.effectiveness || {};
           const levelNum = emp.level || emp.employee_level || null;
           const level = levelNum ? `Lv ${levelNum}` : '';
- 
+
           // ── Inactivity warning based on last_action.timestamp ──────────────
           const lastActionTs = emp.last_action.timestamp || 0;
           const hoursAgo = lastActionTs
             ? Math.floor((Date.now() / 1000 - lastActionTs) / 3600)
             : null;
- 
+
           let timeLabel = emp.last_action.relative; // fallback
           if (hoursAgo !== null) {
             if (hoursAgo < 1)       timeLabel = 'Just now';
             else if (hoursAgo < 24) timeLabel = `${hoursAgo}h ago`;
             else                    timeLabel = `${Math.floor(hoursAgo / 24)}d ${hoursAgo % 24}h ago`;
           }
- 
+
           // Warning levels: 24h = yellow ⚠️, 48h = orange 🟠, 72h+ = red 🔴
           let inactivityWarning = '';
           let nameWarning = '';
@@ -1586,7 +1623,7 @@
               nameWarning = ' ⚠️';
             }
           }
- 
+
           html += `
             <div class="employee-card" onclick="toggleEmployeeDetails('${id}')">
               <div class="employee-header">
@@ -1620,7 +1657,7 @@
                   <div class="eff-item"><div class="eff-label">Inactivity</div><div class="eff-value ${eb.inactivity < 0 ? 'negative' : 'positive'}">${eb.inactivity || 0}%</div></div>
                 </div>
                 <div style="margin-top: 12px; padding: 8px; background: var(--border-color); border-radius: 4px; text-align: center;"><strong>Total Effectiveness: ${eff}%</strong></div>
- 
+
                 <!-- ── Trains counter ── -->
                 <div class="trains-row">
                   <div>
@@ -1633,14 +1670,14 @@
                     <button class="trains-btn" onclick="adjustTrains('${id}', 1, event)">+</button>
                   </div>
                 </div>
- 
+
                 <!-- ── Custom fields ── -->
                 <div class="custom-fields-section" id="custom-fields-${id}"></div>
- 
+
                 <!-- ── Add field UI ── -->
                 <button class="add-field-btn" id="add-field-btn-${id}"
                   onclick="showAddFieldForm('${id}', event)">+ Add Custom Field</button>
- 
+
                 <div class="add-field-form" id="add-field-form-${id}" style="display:none"
                   onclick="event.stopPropagation()">
                   <input class="add-field-input" id="field-name-input-${id}"
@@ -1658,9 +1695,9 @@
               </div>
             </div>`;
         });
- 
+
       html += `</div></div>`;
- 
+
       // ── Optimal Assignment ─────────────────────────────────────────────────
       const optResult = buildOptimalAssignment(companyType, employees);
       html += `
@@ -1670,7 +1707,7 @@
             <button class="collapse-btn" id="suggestionsToggle">▲</button>
           </div>
           <div class="collapsible-body" id="suggestionsBody" style="max-height: 9999px;">`;
- 
+
       if (!optResult) {
         html += `<div class="no-data-note" style="margin-top: 12px;">No role data available for <strong>${companyType || 'this company type'}</strong>.</div>`;
       } else {
@@ -1684,7 +1721,7 @@
             <span><span class="dot dot-green"></span> Already in best role</span>
             <span><span class="dot dot-amber"></span> Better role available</span>
           </div>`;
- 
+
         let shownOverflowHeader = false;
         optResult.assignments.forEach(({ employee, suggestedRole, currentRole, score, isMismatch, isLowValue, isOverflow }) => {
           // Divider before overflow section
@@ -1714,7 +1751,7 @@
             </div>
           </div>`;
         });
- 
+
         if (moveCount > 0) {
           html += `<div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.1);border-radius:6px;font-size:12px;color:var(--text-secondary);">
             <strong style="color:#92400e;">⚠️ ${moveCount} role change${moveCount > 1 ? 's' : ''} suggested</strong> — moving these employees to their best-fit roles should improve overall effectiveness.
@@ -1727,10 +1764,212 @@
         }
       }
       html += `</div></div>`;
- 
+
       container.innerHTML = html;
+      // Kick off star ranking fetch asynchronously after main render
+      fetchAndDisplayStarRanking(currentApiKey, data);
     }
- 
+
+    // ─── Star ranking engine ──────────────────────────────────────────────────
+    // Uses company → companies selection (globally cached daily by Torn).
+    // Fetches all companies of same type, ranks by weekly income,
+    // then determines star gain/hold/risk/drop projection.
+
+    async function fetchAndDisplayStarRanking(apiKey, data) {
+      const body = document.getElementById('starRankingBody');
+      if (!body) return;
+
+      const profile  = data.company;
+      const detailed = data.company_detailed;
+
+      // Resolve numeric type ID — we need the raw number for the API call
+      const rawType = (profile && profile.company_type) ||
+                      (detailed && detailed.company_type) || null;
+      const companyId = (detailed && detailed.ID) || (profile && profile.ID) || null;
+      const myWeeklyIncome = (profile && profile.weekly_income) || 0;
+      const myStars = (detailed && detailed.rating) || (profile && profile.rating) || 0;
+      const companyName = (profile && profile.name) || 'Your Company';
+
+      if (!rawType) {
+        body.innerHTML = `<div class="star-caveat">⚠️ Could not determine company type — star projection unavailable.</div>`;
+        return;
+      }
+
+      try {
+        const resp = await fetch(
+          `https://api.torn.com/company/?selections=companies&key=${apiKey}`,
+          { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } }
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const companiesData = await resp.json();
+        if (companiesData.error) throw new Error(`API error ${companiesData.error.code}`);
+
+        // companies is keyed by company ID, each has: name, rating, weekly_income, etc.
+        const companies = companiesData.companies || {};
+
+        // Filter to same company type, build ranked list
+        const sameType = Object.entries(companies)
+          .filter(([id, c]) => c.company_type === rawType)
+          .map(([id, c]) => ({
+            id,
+            name: c.name,
+            stars: c.rating || 0,
+            weekly: c.weekly_income || 0
+          }))
+          .sort((a, b) => b.weekly - a.weekly);
+
+        if (sameType.length === 0) {
+          body.innerHTML = `<div class="star-caveat">No comparison data found for this company type.</div>`;
+          return;
+        }
+
+        // Find my position (match by company ID first, fall back to name+weekly match)
+        let myIdx = sameType.findIndex(c => c.id === String(companyId));
+        if (myIdx === -1) myIdx = sameType.findIndex(c => c.name === companyName);
+        // If still not found, inject ourselves by income
+        if (myIdx === -1) {
+          sameType.push({ id: String(companyId), name: companyName, stars: myStars, weekly: myWeeklyIncome, isMe: true });
+          sameType.sort((a, b) => b.weekly - a.weekly);
+          myIdx = sameType.findIndex(c => c.isMe);
+        } else {
+          sameType[myIdx].isMe = true;
+        }
+
+        const mine = sameType[myIdx];
+
+        // Find boundary companies
+        // - Lowest company in the star tier above mine (the target to beat for gain)
+        // - Highest company in the star tier below mine (the floor to stay above for hold)
+        const tierAbove = sameType.filter(c => c.stars === myStars + 1);
+        const tierBelow = sameType.filter(c => c.stars === myStars - 1);
+        const tierSame  = sameType.filter(c => c.stars === myStars);
+
+        const lowestAbove = tierAbove.length
+          ? tierAbove.reduce((min, c) => c.weekly < min.weekly ? c : min, tierAbove[0])
+          : null;
+        const highestBelow = tierBelow.length
+          ? tierBelow.reduce((max, c) => c.weekly > max.weekly ? c : max, tierBelow[0])
+          : null;
+
+        // Determine verdict
+        // gain: my income > lowest in tier above (and tier above exists)
+        // risk: my income < highest in tier below (and tier below exists)
+        // drop: at max star already no drop concern; at 0 no tier below
+        // hold: everything else
+        let verdict, verdictClass, verdictEmoji, subText;
+        const atMaxStar = myStars >= 10;
+        const atMinStar = myStars <= 0;
+
+        const beatsAbove = lowestAbove && mine.weekly > lowestAbove.weekly;
+        const losesToBelow = highestBelow && mine.weekly < highestBelow.weekly;
+
+        if (atMaxStar) {
+          if (losesToBelow) {
+            verdict = '🔴 At risk of losing a star';
+            verdictClass = 'drop';
+            subText = `You're at ★10 but ${highestBelow.name} (★${highestBelow.stars}) is earning more than you. On Sunday, you may drop to ★9.`;
+          } else {
+            verdict = '✅ Holding ★10';
+            verdictClass = 'hold';
+            subText = `You're the highest star tier. No star to gain — focus on staying above the ★9 competition.`;
+          }
+        } else if (beatsAbove && losesToBelow) {
+          // Rare edge case — between tiers
+          verdict = '⚠️ Borderline — gain likely, but watch below';
+          verdictClass = 'risk';
+          subText = `Your income beats the lowest ★${myStars + 1} company, but a ★${myStars - 1} company is closing in. Gain is projected but margin is thin.`;
+        } else if (beatsAbove) {
+          verdict = `🟢 Projected to gain a star (★${myStars} → ★${myStars + 1})`;
+          verdictClass = 'gain';
+          subText = `Your weekly income beats the lowest ★${myStars + 1} company. If the lifetime XP threshold is already unlocked, you should gain a star this Sunday at ~18:00 TCT.`;
+        } else if (losesToBelow && !atMinStar) {
+          verdict = `🔴 At risk of losing a star (★${myStars} → ★${myStars - 1})`;
+          verdictClass = 'drop';
+          subText = `A ★${myStars - 1} company is earning more than you this week. You may drop a star on Sunday.`;
+        } else if (!lowestAbove && !atMaxStar) {
+          verdict = `✅ Holding ★${myStars} (no ★${myStars + 1} companies to compare)`;
+          verdictClass = 'hold';
+          subText = `There are no ★${myStars + 1} companies in your type to compare against. Keep income high to gain when the tier opens up.`;
+        } else {
+          // Check how close to the threshold
+          const gap = lowestAbove ? lowestAbove.weekly - mine.weekly : null;
+          const pctOfTarget = lowestAbove ? Math.round((mine.weekly / lowestAbove.weekly) * 100) : 100;
+          if (gap !== null && pctOfTarget >= 85) {
+            verdict = `🟡 Close — borderline for ★${myStars + 1}`;
+            verdictClass = 'risk';
+            subText = `You're ${pctOfTarget}% of the way to beating the lowest ★${myStars + 1} company. A strong day could tip you over.`;
+          } else {
+            verdict = `✅ Holding ★${myStars}`;
+            verdictClass = 'hold';
+            subText = lowestAbove
+              ? `You need $${(lowestAbove.weekly - mine.weekly).toLocaleString()} more weekly income to beat the lowest ★${myStars + 1} company.`
+              : `No companies above your star tier to compare with.`;
+          }
+        }
+
+        // Progress bar toward next tier
+        const barPct = lowestAbove && !atMaxStar
+          ? Math.min(100, Math.round((mine.weekly / lowestAbove.weekly) * 100))
+          : 100;
+
+        // Build context table — show a window of ~5 companies around mine
+        const windowStart = Math.max(0, myIdx - 3);
+        const windowEnd   = Math.min(sameType.length - 1, myIdx + 3);
+        const windowRows  = sameType.slice(windowStart, windowEnd + 1);
+
+        let tableHtml = `<table class="star-context-table">
+          <thead><tr><th>#</th><th>Company</th><th>★</th><th>Weekly Income</th></tr></thead><tbody>`;
+        if (windowStart > 0) tableHtml += `<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);font-size:11px;">… ${windowStart} companies above …</td></tr>`;
+        windowRows.forEach((c, i) => {
+          const rank = windowStart + i + 1;
+          const isMe = c.isMe || c.id === String(companyId);
+          tableHtml += `<tr class="${isMe ? 'highlight' : ''}">
+            <td>#${rank}</td>
+            <td>${c.name}${isMe ? ' ◀ you' : ''}</td>
+            <td>${'★'.repeat(Math.min(c.stars, 5))}${c.stars > 5 ? c.stars : ''}</td>
+            <td>$${c.weekly.toLocaleString()}</td>
+          </tr>`;
+        });
+        const remaining = sameType.length - windowEnd - 1;
+        if (remaining > 0) tableHtml += `<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);font-size:11px;">… ${remaining} companies below …</td></tr>`;
+        tableHtml += `</tbody></table>`;
+
+        // Your rank
+        const totalSameType = sameType.length;
+        const incomeRank = myIdx + 1;
+
+        body.innerHTML = `
+          <div style="font-size:12px;color:var(--text-secondary);margin:10px 0 8px;">
+            Income rank <strong style="color:var(--text-primary);">#${incomeRank}</strong> of <strong style="color:var(--text-primary);">${totalSameType}</strong> ${COMPANY_TYPE_MAP[rawType] || 'companies'} by weekly income
+          </div>
+          <div class="star-rank-card ${verdictClass}">
+            <div class="star-verdict ${verdictClass}">${verdict}</div>
+            <div class="star-sub">${subText}</div>
+            ${!atMaxStar && lowestAbove ? `
+            <div class="star-bar-wrap">
+              <div class="star-bar-label">
+                <span>Your weekly income</span>
+                <span>${barPct}% of ★${myStars + 1} threshold</span>
+              </div>
+              <div class="star-bar-track">
+                <div class="star-bar-fill ${verdictClass}" style="width:${barPct}%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);margin-top:3px;">
+                <span>You: $${mine.weekly.toLocaleString()}</span>
+                <span>Target: $${lowestAbove.weekly.toLocaleString()} (${lowestAbove.name})</span>
+              </div>
+            </div>` : ''}
+          </div>
+          ${tableHtml}
+          <div class="star-caveat">
+            ⚠️ <strong>Income-based projection only.</strong> Torn also requires a hidden lifetime XP threshold to be reached before a star can be gained — even if your income qualifies. If you don't gain a star despite this showing green, the XP threshold may not yet be unlocked. Star evaluation happens every <strong>Sunday ~18:00 TCT</strong>. Data is globally cached by Torn and updates once daily.
+          </div>`;
+
+      } catch (err) {
+        body.innerHTML = `<div class="star-caveat">⚠️ Could not load company rankings: ${err.message}. This is non-critical — all other data is still accurate.</div>`;
+      }
+    }
+
     // ─── Export to CSV ────────────────────────────────────────────────────────
     function exportCSV() {
       if (!companyData) return;
@@ -1765,7 +2004,7 @@
       a.click();
       URL.revokeObjectURL(url);
     }
- 
+
     // ─── Export to PDF (print-to-PDF via browser print dialog) ───────────────
     function exportPDF() {
       if (!companyData) return;
@@ -1778,7 +2017,7 @@
                       (detailed && detailed.company_type) || '';
       const companyType = typeof rawType === 'number' ? (COMPANY_TYPE_MAP[rawType] || '') : rawType;
       const now = new Date().toLocaleString();
- 
+
       let rows = '';
       Object.entries(employees)
         .sort((a, b) => (b[1].effectiveness?.total || 0) - (a[1].effectiveness?.total || 0))
@@ -1800,7 +2039,7 @@
             <td>${emp.last_action.status}</td>
           </tr>`;
         });
- 
+
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
         <title>${companyName} — Employee Report</title>
         <style>
@@ -1838,14 +2077,14 @@
         </div>
         <script>window.onload = function(){ window.print(); }<\/script>
         </body></html>`;
- 
+
       const blob = new Blob([html], { type: 'text/html' });
       const url  = URL.createObjectURL(blob);
       const win  = window.open(url, '_blank');
       if (!win) showError('Pop-up blocked — please allow pop-ups for this page to export PDF.');
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
- 
+
     // ─── Copy role changes to clipboard ───────────────────────────────────────
     function copyRoleChanges() {
       if (!companyData) return;
@@ -1856,7 +2095,7 @@
       const companyType = typeof rawType === 'number' ? (COMPANY_TYPE_MAP[rawType] || '') : rawType;
       const result = buildOptimalAssignment(companyType, companyData.company_employees);
       if (!result) return;
- 
+
       const moves = result.assignments.filter(a => a.isMismatch && !a.isLowValue);
       if (moves.length === 0) {
         navigator.clipboard.writeText('✅ All employees are already in their optimal roles!');
@@ -1874,4 +2113,3 @@
   </script>
 </body>
 </html>
- 
